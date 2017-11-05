@@ -39,18 +39,6 @@ void KeyRecord_setKIN(KeyRecord_T oKeyRecord, int iKin);
 
 /*--------------------------------------------------------------------*/
 
-/* Return the parent KIN of oKeyRecord. */
-
-int KeyRecord_getParentKIN(KeyRecord_T oKeyRecord);
-
-/*--------------------------------------------------------------------*/
-
-/* Set the parent KIN of oKeyRecord.*/
-
-void KeyRecord_setParentKIN(KeyRecord_T oKeyRecord, int iParentKin);
-
-/*--------------------------------------------------------------------*/
-
 /* Return the encryption algorithm identifier of oKeyRecord. */
 
 int KeyRecord_getEncAlgo(KeyRecord_T oKeyRecord);
@@ -88,11 +76,54 @@ char *KeyRecord_getHash(KeyRecord_T oKeyRecord);
 
 /* Compute a keyed cryptographic hash of the entire key record using
    the parent key. Set the keyed hash of oKeyRecord. 
-   Return 1 if success, 0 if failure.*/
+   Return 1 if success, 0 if failure.
 
-int KeyRecord_setHash(KeyRecord_T oKeyRecord, char *pcEncKey);
+   For now just set the hash to pcHash. */
+
+int KeyRecord_setHash(KeyRecord_T oKeyRecord, char *pcHash);
 
 /*--------------------------------------------------------------------*/
+
+/* Return the parent keyrecord of oKeyRecord. */
+
+KeyRecord_T KeyRecord_getParent(KeyRecord_T oKeyRecord);
+
+/*--------------------------------------------------------------------*/
+
+/* Return the (first) child of oKeyRecord. */
+
+KeyRecord_T KeyRecord_getChild(KeyRecord_T oKeyRecord);
+
+/*--------------------------------------------------------------------*/
+
+/* Return the next keyrecord at the same level as oKeyRecord. */
+
+KeyRecord_T KeyRecord_getNext(KeyRecord_T oKeyRecord);
+
+/*--------------------------------------------------------------------*/
+
+/* Set the parent of oKeyRecord to oParentKey. Return 1 if success,
+   0 if failure. */
+
+int KeyRecord_setParent(KeyRecord_T oKeyRecord, KeyRecord_T oParentKey);
+
+/*--------------------------------------------------------------------*/
+
+/* Set the first child of oKeyRecord to oChildKey. Return 1 if success,
+   0 if failure. */
+
+int KeyRecord_setChild(KeyRecord_T oKeyRecord, KeyRecord_T oChildKey);
+
+/*--------------------------------------------------------------------*/
+
+/* Set the next of oKeyRecord to oNextKey. Return 1 if success,
+   0 if failure. */
+
+int KeyRecord_setNext(KeyRecord_T oKeyRecord, KeyRecord_T oNextKey);
+
+/*--------------------------------------------------------------------*/
+
+/* Set the next 
 
 /* this should probably be a TSM function */
 

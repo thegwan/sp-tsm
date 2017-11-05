@@ -27,9 +27,17 @@ static void assure(int iSuccessful, int iLineNum)
 
 static void testBasics()
 {
+    KeyRecord_T oRoot;
     KeyRecord_T oKeyRecord1;
     KeyRecord_T oKeyRecord2;
     KeyRecord_T oKeyRecord3;
+    char acUserMasterKey[] = "0000000000000000";
+    char acEncKey1[] = "0000000000000001";
+    char acEncKey2[] = "0000000000000002";
+    char acEncKey3[] = "0000000000000003";
+    char acKey1Hash[] = "1111111111111111";
+    char acKey2Hash[] = "1111111111111112";
+    char acKey3Hash[] = "1111111111111113";
 
     oKeyRecord1 = KeyRecord_new();
     ASSURE(oKeyRecord1 != NULL);
@@ -40,14 +48,10 @@ static void testBasics()
     oKeyRecord3 = KeyRecord_new();
     ASSURE(oKeyRecord3 != NULL);
 
+
     KeyRecord_free(oKeyRecord1);
-    ASSURE(oKeyRecord1 == NULL);
-
     KeyRecord_free(oKeyRecord2);
-    ASSURE(oKeyRecord2 == NULL);
-
     KeyRecord_free(oKeyRecord3);
-    ASSURE(oKeyRecord3 == NULL);
 
 
 }

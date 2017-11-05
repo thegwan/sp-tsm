@@ -20,9 +20,6 @@ struct KeyRecord
     /* The key identification number. */
     int iKin;
 
-    /* The parent KIN. */
-    int iParentKin;
-
     /* The encryption algorithm identification number. */
     int iEncAlgo;
 
@@ -38,13 +35,13 @@ struct KeyRecord
     int numChildren;
 
     /* pointer to parent */
-    // struct KeyRecord *psParentNode;
+    struct KeyRecord *psParent;
 
-    // /* pointer to children of this node */
-    // struct KeyRecord *psChildNode;
+    /* pointer to children of this node */
+    struct KeyRecord *psChild;
 
-    // /* pointer to next node at same level. */
-    // struct KeyRecord *psNextNode;
+    /* pointer to next node at same level. */
+    struct KeyRecord *psNext;
 };
 
 /*--------------------------------------------------------------------*/
@@ -89,6 +86,9 @@ void KeyRecord_free(KeyRecord_T oKeyRecord)
     assert(oKeyRecord != NULL);
     free(oKeyRecord->pcEncKey);
     free(oKeyRecord->pcHash);
+    free(oKeyRecord->psParent);
+    free(oKeyRecord->psChild);
+    free(oKeyRecord->psNext);
     free(oKeyRecord);
 }
 
@@ -106,22 +106,6 @@ void KeyRecord_setKIN(KeyRecord_T oKeyRecord, int iKin)
 {
     assert(oKeyRecord != NULL);
     oKeyRecord->iKin = iKin;
-}
-
-/*--------------------------------------------------------------------*/
-
-int KeyRecord_getParentKIN(KeyRecord_T oKeyRecord)
-{
-    assert(oKeyRecord != NULL);
-    return oKeyRecord->iParentKin;
-}
-
-/*--------------------------------------------------------------------*/
-
-void KeyRecord_setParentKIN(KeyRecord_T oKeyRecord, int iParentKin)
-{
-    assert(oKeyRecord != NULL);
-    oKeyRecord->iParentKin = iParentKin;
 }
 
 /*--------------------------------------------------------------------*/
