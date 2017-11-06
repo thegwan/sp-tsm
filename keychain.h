@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/* keychain.h                                                        */
+/* keychain.h                                                         */
 /* Author: Gerry Wan                                                  */
 /*--------------------------------------------------------------------*/
 
@@ -26,34 +26,40 @@ void KeyChain_free(KeyChain_T oKeyChain);
 
 /*--------------------------------------------------------------------*/
 
-/* Return the key record oKeyRecord in oKeyChain. Will probably
-   need more parameters to search. Return NULL if not found. */
+/* Return the number of keys in oKeyChain. */
 
-KeyRecord_T KeyChain_getKey(KeyChain_T oKeyChain, KeyRecord_T oKey);
+int KeyChain_getNumKeys(KeyChain_T oKeyChain);
 
 /*--------------------------------------------------------------------*/
 
-/* Add the key record oChildKey as a child of the parent key
-   record oParentKey in oKeyChain. Return 1 on success, 0 on
-   failure. */
+/* Return the encrypted key of piKeyID in oKeyChain.
+   *** Modify to return the plaintext key ***
+   Return NULL if not found. */
+
+char *KeyChain_getKey(KeyChain_T oKeyChain, int *piKeyID);
+
+/*--------------------------------------------------------------------*/
+
+/* Add the encrypted key pcEncKey as a child of the parent key with ID 
+   piParentKeyID in oKeyChain. Return 1 on success, 0 on failure. 
+   *** Modify to add the plaintext key ***
+   */
 
 int KeyChain_addKey(KeyChain_T oKeyChain,
-                    KeyRecord_T oParentKey,
-                    KeyRecord_T oChildKey);
+                    int *piParentKeyID,
+                    char *pcEncKey);
 
 /*--------------------------------------------------------------------*/
 
-/* Rempve the key record oKey from oKeyChain. Will probably need
-   more parameters to search. Return removed item, or NULL if not 
-   found. */
+/* Remove the key with key ID piKeyID from oKeyChain. Return the
+   encrypted key of the removed key node, or NULL if not found. 
+   *** Modify to return the plaintext key ***
+   */
 
-KeyRecord_T KeyChain_removeKey(KeyChain_T oKeyChain, KeyRecord_T oKey);
+char *KeyChain_removeKey(KeyChain_T oKeyChain, int *piKeyID);
 
 /*--------------------------------------------------------------------*/
 
-/* Set the parent KIN of oKeyChain.*/
-
-void KeyChain_setParentKIN(KeyChain_T oKeyChain, int iParentKin);
 
 /*--------------------------------------------------------------------*/
 
