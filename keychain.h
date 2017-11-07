@@ -32,31 +32,40 @@ int KeyChain_getNumKeys(KeyChain_T oKeyChain);
 
 /*--------------------------------------------------------------------*/
 
-/* Return the encrypted key of piKeyID in oKeyChain.
-   *** Modify to return the plaintext key ***
-   Return NULL if not found. */
+/* Return 1 if the oKeyChain contains a key with key ID pcKeyID, 0
+   otherwise. */
 
-char *KeyChain_getKey(KeyChain_T oKeyChain, int *piKeyID);
+int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
 
-/* Add the encrypted key pcEncKey as a child of the parent key with ID 
-   piParentKeyID in oKeyChain. Return 1 on success, 0 on failure. 
+/* Return a pointer to the encrypted key of pcKeyID in oKeyChain.
+   *** Modify to return the plaintext key ***
+   Return NULL if not found. */
+
+char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID);
+
+/*--------------------------------------------------------------------*/
+
+/* Add the key pcKeyID with the encrypted key pcEncKey as a child of 
+   the parent key pcParentKeyID in oKeyChain. Return 1 on success, 
+   0 on failure. 
    *** Modify to add the plaintext key ***
    */
 
-int KeyChain_addKey(KeyChain_T oKeyChain,
-                    int *piParentKeyID,
+int KeyChain_addKey(KeyChain_T oKeyChain, 
+                    char *pcParentKeyID,
+                    char *pcKeyID, 
                     char *pcEncKey);
 
 /*--------------------------------------------------------------------*/
 
-/* Remove the key with key ID piKeyID from oKeyChain. Return the
+/* Remove the key with key ID pcKeyID from oKeyChain. Return the
    encrypted key of the removed key node, or NULL if not found. 
    *** Modify to return the plaintext key ***
    */
 
-char *KeyChain_removeKey(KeyChain_T oKeyChain, int *piKeyID);
+char *KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
 
