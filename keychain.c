@@ -9,6 +9,7 @@
 #include <string.h>  /* really only need strcpy and strlen, could 
                         implement myself */
 #include <assert.h>  /* asserts, inlining code? necessary?  */
+#include <stdio.h>
 
 
 /*--------------------------------------------------------------------*/
@@ -67,13 +68,46 @@ struct KeyChain
 KeyChain_T KeyChain_new(void)
 {
     KeyChain_T oKeyChain;
+    struct KeyNode *psRoot;
+    char *pcRootKeyID;
+    char *pcRootEncKey;
+    char *pcRootHash;
 
     oKeyChain = (KeyChain_T)malloc(sizeof(struct KeyChain));
     if (oKeyChain == NULL)
         return NULL;
 
+    // if this fails, free oKeyChain?
+    psRoot = (struct KeyNode *)malloc(sizeof(struct KeyNode));
+    if (psRoot == NULL)
+        return NULL;
+
+    pcRootKeyID = (char *)malloc(2 * sizeof(char));
+    if (pcRootKeyID == NULL)
+        return NULL;
+    strcpy(pcRootKeyID, "0");
+
+    pcRootEncKey = (char *)malloc(17 * sizeof(char));  // 128 bits
+    if (pcRootEncKey == NULL)
+        return NULL;
+    strcpy(pcRootEncKey, "0000000000000000"); // dummy UMK
+
+    pcRootHash = (char *)malloc(17 * sizeof(char));  // 128 bits
+    if (pcRootHash == NULL)
+        return NULL;
+    strcpy(pcRootHash, "1111111111111111"); // dummy root hash
+
+
+    psRoot->pcKeyID = pcRootKeyID;
+    psRoot->pcEncKey = pcRootEncKey;
+    psRoot->pcHash = pcRootHash;
+    psRoot->iDepth = 0;
+    psRoot->iNumChildren = 0;
+    psRoot->psChild = NULL;
+    psRoot->psNext = NULL;
+
     oKeyChain->iNumKeys = 0;
-    oKeyChain->psRoot = NULL;
+    oKeyChain->psRoot = psRoot;
 
     return oKeyChain;
 }
@@ -84,17 +118,20 @@ KeyChain_T KeyChain_new(void)
 static void freeNodes(struct KeyNode *psNode)
 {
     if (psNode) {
+        //printf("node not null\n");
         freeNodes(psNode->psNext);
         freeNodes(psNode->psChild);
-
+        //printf("got past freeing next and child\n");
         /* free key data */
         free(psNode->pcKeyID);
         free(psNode->pcEncKey);
         free(psNode->pcHash);
+        //printf("freed fields\n");
 
         // psNode->psNext = NULL;
         // psNode->psChild = NULL;
         free(psNode);
+        //printf("freed node\n");
     }
 }
 
@@ -127,8 +164,10 @@ static struct KeyNode *getKey(struct KeyNode *psNode, char *pcKeyID)
         return NULL;   // may need to make function return value a void*
 
     currDepth = psNode->iDepth;
+    // printf("currDepth: %d\n", currDepth);
     while (psNode != NULL) {
         if ((psNode->pcKeyID)[currDepth] == pcKeyID[currDepth]) {
+                // printf("correct digit");
             if (strlen(pcKeyID) == currDepth+1)
                 return psNode;
             else
@@ -214,8 +253,11 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
         return 0;
     strcpy(pcEncKeyCpy, pcEncKey);
 
-    pcHash = "0123456789abcdef";  // dummy hash
-
+    pcHash = (char *)malloc(17 * sizeof(char));
+    if (pcHash == NULL)
+        return 0;
+    strcpy(pcHash, "0123456789abcdef"); // dummy hash
+    
     psNewNode->pcKeyID = pcKeyIDCpy;
     psNewNode->pcEncKey = pcEncKeyCpy;
     psNewNode->pcHash = pcHash;

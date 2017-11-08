@@ -4,6 +4,9 @@
 # Dependency rules for non-file targets
 all: testkeychain
 
+clean:
+	rm -f *.o
+
 # Dependency rules for file targets
 testkeychain: testkeychain.o keychain.o
 	gcc testkeychain.o keychain.o -o testkeychain
