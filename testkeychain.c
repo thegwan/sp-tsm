@@ -213,7 +213,6 @@ static void testBasics()
     iValue = KeyChain_getNumKeys(oKeyChain);
     ASSURE(iValue == 4);   
 
-
     KeyChain_free(oKeyChain);
 
 }

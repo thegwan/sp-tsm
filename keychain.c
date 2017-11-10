@@ -332,6 +332,7 @@ int KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID)
     free(psResultNode->pcKeyID);
     free(psResultNode->pcEncKey);
     free(psResultNode->pcHash);
+
     free(psResultNode);
 
     return 1;
