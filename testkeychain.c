@@ -211,7 +211,22 @@ static void testBasics()
     ASSURE(iValue == 1);
 
     iValue = KeyChain_getNumKeys(oKeyChain);
-    ASSURE(iValue == 4);   
+    ASSURE(iValue == 4);
+
+    iValue = KeyChain_removeKey(oKeyChain, acKeyID_00);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_00);
+    ASSURE(iValue == 0);
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_000);
+    ASSURE(iValue == 0);  
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_0001);
+    ASSURE(iValue == 0);
+
+    iValue = KeyChain_getNumKeys(oKeyChain);
+    ASSURE(iValue == 1);            
 
     KeyChain_free(oKeyChain);
 

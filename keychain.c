@@ -47,6 +47,8 @@ struct KeyNode
     /* pointer to next node at same level */
     struct KeyNode *psNext;
 
+    struct KeyNode *psParent;
+
 };
 
 
@@ -106,6 +108,7 @@ KeyChain_T KeyChain_new(void)
     psRoot->iNumChildren = 0;
     psRoot->psChild = NULL;
     psRoot->psNext = NULL;
+    psRoot->psParent = NULL;
 
     oKeyChain->iNumKeys = 0;
     oKeyChain->psRoot = psRoot;
@@ -123,6 +126,7 @@ static void freeNodes(struct KeyNode *psNode)
         //printf("node not null\n");
         freeNodes(psNode->psNext);
         freeNodes(psNode->psChild);
+
         //printf("got past freeing next and child\n");
         /* free key data */
         free(psNode->pcKeyID);
@@ -222,6 +226,7 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
 {
     struct KeyNode *psNewNode;
     struct KeyNode *psParentNode;
+    struct KeyNode *psParentIter;
     char *pcKeyIDCpy;
     char *pcEncKeyCpy;
     char *pcHash;
@@ -233,7 +238,7 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
 
     // find parent node
     psParentNode = getKey(oKeyChain->psRoot, pcParentKeyID);
-    if (psParentNode == NULL || psParentNode->iNumChildren >= 10)
+    if (psParentNode == NULL)
         return 0;
 
     // make sure key is not already in the chain
@@ -270,9 +275,14 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
 
     psNewNode->psNext = psParentNode->psChild;
     psNewNode->psChild = NULL;
+    psNewNode->psParent = psParentNode;
     psParentNode->psChild = psNewNode;
 
-    psParentNode->iNumChildren++;
+    psParentIter = psParentNode;
+    while (psParentIter != NULL) {
+        psParentIter->iNumChildren++;
+        psParentIter = psParentIter->psParent;
+    }
     oKeyChain->iNumKeys++;
 
     return 1;
@@ -315,6 +325,7 @@ static struct KeyNode *removeKey(struct KeyNode *psCurrNode,
 int KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID)
 {
     struct KeyNode *psResultNode;
+    struct KeyNode *psParentIter;
 
     assert(oKeyChain != NULL);
     assert(pcKeyID != NULL);
@@ -327,6 +338,14 @@ int KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID)
                              pcKeyID);
     if (psResultNode == NULL)
         return 0;
+    //printf("removd: %s\n", psResultNode->pcKeyID);
+    //printf("numremove: %d\n", psResultNode->iNumChildren + 1);
+
+    psParentIter = psResultNode->psParent;
+    while (psParentIter != NULL) {
+        (psParentIter->iNumChildren) -= (psResultNode->iNumChildren + 1);
+        psParentIter = psParentIter->psParent;
+    }
 
     (oKeyChain->iNumKeys) -= (psResultNode->iNumChildren + 1);
     free(psResultNode->pcKeyID);
