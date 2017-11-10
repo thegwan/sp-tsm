@@ -38,11 +38,23 @@ static void testBasics()
     char acKeyID_01[] = "01";
     char acEncKey_01[] = "0000000000000002";
 
+    char acKeyID_02[] = "02";
+    char acEncKey_02[] = "0000000000000003";
+
     char acKeyID_000[] = "000";
-    char acEncKey_000[] = "0000000000000003";
+    char acEncKey_000[] = "0000000000000004";
 
     char acKeyID_010[] = "010";
-    char acEncKey_010[] = "0000000000000004";
+    char acEncKey_010[] = "0000000000000005";
+
+    char acKeyID_011[] = "011";
+    char acEncKey_011[] = "0000000000000006";
+
+    char acKeyID_0000[] = "0000";
+    char acEncKey_0000[] = "0000000000000007";
+
+    char acKeyID_0001[] = "0001";
+    char acEncKey_0001[] = "0000000000000008";    
 
 
     char acKey1Hash[] = "1111111111111111";  // dummy hashes
@@ -115,6 +127,91 @@ static void testBasics()
     // printf("key id 000: %s\n", pcResult);
     ASSURE(strcmp(pcResult, acEncKey_000) == 0);
 
+    /* try to remove root */
+    iValue = KeyChain_removeKey(oKeyChain, acRootKeyID_0);
+    ASSURE(iValue == 0);
+
+    iValue = KeyChain_contains(oKeyChain, acRootKeyID_0);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_getNumKeys(oKeyChain);
+    ASSURE(iValue == 3);
+
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_02, acEncKey_02);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_010, acEncKey_010);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_011, acEncKey_011);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0000, acEncKey_0000);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0001, acEncKey_0001);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_0001);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_getNumKeys(oKeyChain);
+    ASSURE(iValue == 8);
+
+    pcResult = KeyChain_getKey(oKeyChain, acKeyID_0000);
+    ASSURE(strcmp(pcResult, acEncKey_0000) == 0);    
+
+    iValue = KeyChain_removeKey(oKeyChain, acKeyID_0000);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_0000);
+    ASSURE(iValue == 0);
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_0001);
+    ASSURE(iValue == 1);    
+
+    iValue = KeyChain_getNumKeys(oKeyChain);
+    ASSURE(iValue == 7);
+
+    iValue = KeyChain_removeKey(oKeyChain, acKeyID_01);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_01);
+    ASSURE(iValue == 0);
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_010);
+    ASSURE(iValue == 0);
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_011);
+    ASSURE(iValue == 0);
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_02);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_00);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_getNumKeys(oKeyChain);
+    ASSURE(iValue == 4);
+
+    /* add key back in */
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0000, acEncKey_0000);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_getNumKeys(oKeyChain);
+    ASSURE(iValue == 5);
+
+    iValue = KeyChain_removeKey(oKeyChain, acKeyID_0000);
+    ASSURE(iValue == 1); 
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_0000);
+    ASSURE(iValue == 0);
+
+    iValue = KeyChain_contains(oKeyChain, acKeyID_0001);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_getNumKeys(oKeyChain);
+    ASSURE(iValue == 4);   
 
 
     KeyChain_free(oKeyChain);

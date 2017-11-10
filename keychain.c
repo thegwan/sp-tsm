@@ -11,6 +11,7 @@
 #include <assert.h>  /* asserts, inlining code? necessary?  */
 #include <stdio.h>
 
+// #define ROOT_KEY_ID "0"
 
 /*--------------------------------------------------------------------*/
 
@@ -114,7 +115,8 @@ KeyChain_T KeyChain_new(void)
 
 /*--------------------------------------------------------------------*/
 
-/* Recursive helper function to free the nodes */
+/* Recursive helper function to free the KeyNode psNode and all its
+   children and siblings */
 static void freeNodes(struct KeyNode *psNode)
 {
     if (psNode) {
@@ -160,12 +162,13 @@ static struct KeyNode *getKey(struct KeyNode *psNode, char *pcKeyID)
 {
     int currDepth;
 
-    if (psNode == NULL)
-        return NULL;   // may need to make function return value a void*
+    // if (psNode == NULL)
+    //     return NULL;   
 
-    currDepth = psNode->iDepth;
+    // currDepth = psNode->iDepth;
     // printf("currDepth: %d\n", currDepth);
     while (psNode != NULL) {
+        currDepth = psNode->iDepth;
         if ((psNode->pcKeyID)[currDepth] == pcKeyID[currDepth]) {
                 // printf("correct digit");
             if (strlen(pcKeyID) == currDepth+1)
@@ -277,9 +280,61 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
 
 /*--------------------------------------------------------------------*/
 
-char *KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID)
+/* Helper function to remove keynode with id pcKeyID */
+static struct KeyNode *removeKey(struct KeyNode *psCurrNode, 
+                                 struct KeyNode *psPrevNode,
+                                 char *pcKeyID)
 {
+    int currDepth;
+    while (psCurrNode != NULL) {
+        currDepth = psCurrNode->iDepth;
+        if ((psCurrNode->pcKeyID)[currDepth] == pcKeyID[currDepth]) {
+                // printf("correct digit");
+            if (strlen(pcKeyID) == currDepth+1) {
+                if (psPrevNode->iDepth == psCurrNode->iDepth) {
+                    psPrevNode->psNext = psCurrNode->psNext;
+                }
+                else {
+                    psPrevNode->psChild = psCurrNode->psNext;
+                }
+                freeNodes(psCurrNode->psChild);
+                return psCurrNode;
+            }
+            else {
+                return removeKey(psCurrNode->psChild, psCurrNode, pcKeyID);
+            }             
+        }
+        psPrevNode = psCurrNode;
+        psCurrNode = psCurrNode->psNext;
+    }
     return NULL;
+}
+
+/*--------------------------------------------------------------------*/
+
+int KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID)
+{
+    struct KeyNode *psResultNode;
+
+    assert(oKeyChain != NULL);
+    assert(pcKeyID != NULL);
+
+    if (strcmp(pcKeyID, "0") == 0)
+        return 0;
+
+    psResultNode = removeKey(oKeyChain->psRoot->psChild,
+                             oKeyChain->psRoot,
+                             pcKeyID);
+    if (psResultNode == NULL)
+        return 0;
+
+    (oKeyChain->iNumKeys) -= (psResultNode->iNumChildren + 1);
+    free(psResultNode->pcKeyID);
+    free(psResultNode->pcEncKey);
+    free(psResultNode->pcHash);
+    free(psResultNode);
+
+    return 1;
 }
 
 /*--------------------------------------------------------------------*/

@@ -60,12 +60,11 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
 
 /*--------------------------------------------------------------------*/
 
-/* Remove the key with key ID pcKeyID from oKeyChain. Return the
-   encrypted key of the removed key node, or NULL if not found. 
-   *** Modify to return the plaintext key ***
+/* Remove the key with key ID pcKeyID from oKeyChain. Return 1 if
+   successful, 0 otherwise.
    */
 
-char *KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID);
+int KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
 
