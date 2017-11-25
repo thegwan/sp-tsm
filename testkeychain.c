@@ -69,6 +69,7 @@ static void testBasics()
 
     char *pcResult;
     unsigned char *pucResult;
+    unsigned char aucBuf[4];
     int iValue;
 
     printf("------------------------------------------------------\n");
@@ -88,7 +89,7 @@ static void testBasics()
     iValue = KeyChain_contains(oKeyChain, acKeyID_00);
     ASSURE(iValue == 0);
 
-    pucResult = KeyChain_getKey(oKeyChain, acRootKeyID_0);
+    pucResult = KeyChain_getKey(oKeyChain, acRootKeyID_0, aucBuf);
     printf("root get key: ");
     phex(pucResult);
     ASSURE(memcmp(pucResult, aucRootEncKey_0, 4) == 0);
@@ -100,12 +101,12 @@ static void testBasics()
     iValue = KeyChain_contains(oKeyChain, acKeyID_00);
     ASSURE(iValue == 1);
 
-    pucResult = KeyChain_getKey(oKeyChain, acKeyID_00);
+    pucResult = KeyChain_getKey(oKeyChain, acKeyID_00, aucBuf);
     printf("00 get key: ");
     phex(pucResult);
     ASSURE(memcmp(pucResult, aucEncKey_00, 4) == 0);
 
-    pucResult = KeyChain_getKey(oKeyChain, acKeyID_01);
+    pucResult = KeyChain_getKey(oKeyChain, acKeyID_01, aucBuf);
     ASSURE(pucResult == NULL);
 
     iValue = KeyChain_getNumKeys(oKeyChain);
@@ -128,12 +129,12 @@ static void testBasics()
     iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_01, aucEncKey_01);
     ASSURE(iValue == 0);
 
-    pucResult = KeyChain_getKey(oKeyChain, acKeyID_01);
+    pucResult = KeyChain_getKey(oKeyChain, acKeyID_01, aucBuf);
     printf("01 get key: ");
     phex(pucResult);
     ASSURE(memcmp(pucResult, aucEncKey_01, 4) == 0);
 
-    pucResult = KeyChain_getKey(oKeyChain, acKeyID_000);
+    pucResult = KeyChain_getKey(oKeyChain, acKeyID_000, aucBuf);
     printf("000 get key: ");
     phex(pucResult);
     ASSURE(memcmp(pucResult, aucEncKey_000, 4) == 0);
@@ -169,7 +170,7 @@ static void testBasics()
     iValue = KeyChain_getNumKeys(oKeyChain);
     ASSURE(iValue == 8);
 
-    pucResult = KeyChain_getKey(oKeyChain, acKeyID_0000);
+    pucResult = KeyChain_getKey(oKeyChain, acKeyID_0000, aucBuf);
     ASSURE(memcmp(pucResult, aucEncKey_0000, 4) == 0);    
 
     iValue = KeyChain_removeKey(oKeyChain, acKeyID_0000);

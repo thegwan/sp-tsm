@@ -36,18 +36,10 @@ void xor_encrypt(unsigned char *pucInput,
     assert(pucKey != NULL);
     assert(uiLength % KEYLEN == 0);
 
-
     memcpy(pucOutput, pucInput, uiLength);
     for (i = 0; i < uiLength; i++) {
         pucOutput[i] ^= pucKey[i % KEYLEN];
     }
-
-    printf("Input:");
-    phex(pucInput);
-        printf("Key:");
-    phex(pucKey);
-        printf("Output:");
-    phex(pucOutput);
 }
 
 /*--------------------------------------------------------------------*/

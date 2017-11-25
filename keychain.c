@@ -212,36 +212,36 @@ int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID)
 
 }
 
-static unsigned char *getPlainKey(struct KeyNode *psNode)
+static unsigned char *getPlainKey(struct KeyNode *psNode,
+                                  unsigned char *pucOutput)
 {
-    static unsigned char aucPlainKey[4];
+    unsigned char aucBuf[4];
     unsigned char *pucParentPlainKey;
 
     if (psNode->psParent == NULL)     // is root, return UMK
         return psNode->pucEncKey;
-    pucParentPlainKey = getPlainKey(psNode->psParent);
-    printf("$$$");
-    phex(pucParentPlainKey);
-    // printf("child");
-    // phex(psNode->pucEncKey);
-    xor_decrypt(psNode->pucEncKey, aucPlainKey, 4, pucParentPlainKey);
-    // printf("ret");
-    // phex(aucPlainKey);
-    return aucPlainKey;
+    pucParentPlainKey = getPlainKey(psNode->psParent, pucOutput);
+
+    xor_decrypt(psNode->pucEncKey, aucBuf, 4, pucParentPlainKey);
+    memcpy(pucOutput, aucBuf, 4);
+
+    return pucOutput;
 }
 
 /*--------------------------------------------------------------------*/
 
-unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID)
+unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID,
+                               unsigned char *pucOutput)
 {
     struct KeyNode *psResultNode;
 
     assert(oKeyChain != NULL);
     assert(pcKeyID != NULL);
+    assert(pucOutput != NULL);
 
     psResultNode = getKeyNode(oKeyChain->psRoot, pcKeyID);
     if (psResultNode != NULL)
-        return getPlainKey(psResultNode);
+        return getPlainKey(psResultNode, pucOutput);
     return NULL;
 
 }
@@ -259,6 +259,8 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
     char *pcKeyIDCpy;
     unsigned char *pucEncKey;
     unsigned char *pucHash;
+
+    unsigned char aucParentKeyBuf[4];
 
     unsigned char aucDummyHash[] = {0x00, 0x01, 0x02, 0x03};  
 
@@ -290,12 +292,8 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
     if (pucEncKey == NULL)
         return 0;
     memset(pucEncKey, 0, 4);
-    xor_encrypt(pucKey, pucEncKey, 4, getPlainKey(psParentNode));
-    // printf("adding keyid %s with encrypted key: ", pcKeyIDCpy);
-    // phex(pucEncKey);
-    // printf("the plaintext key was: ");
-    // phex(pucKey);
-    // printf("----------------\n");
+    xor_encrypt(pucKey, pucEncKey, 4, getPlainKey(psParentNode, aucParentKeyBuf));
+
 
     pucHash = (unsigned char *)malloc(4 * sizeof(unsigned char));
     if (pucHash == NULL)

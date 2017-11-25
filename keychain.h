@@ -42,7 +42,7 @@ int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID);
 /* Decrypt and return the 32 bit key of pcKeyID in oKeyChain.
    Return NULL if not found. */
 
-unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID);
+unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID, unsigned char *pucOutput);
 
 /*--------------------------------------------------------------------*/
 
