@@ -26,41 +26,52 @@ static void assure(int iSuccessful, int iLineNum)
 static void testBasics()
 {
 
-    unsigned char aucKey0[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00};
+    unsigned char aucKey0[] = {0x00, 0x00, 0x00, 0x00};
 
-    unsigned char aucKey1[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x01};  
+    unsigned char aucKey1[] = {0x00, 0x00, 0x00, 0x01};  
 
-    unsigned char aucKey2[] = {(unsigned char) 0x6d, (unsigned char) 0x22, (unsigned char) 0xa5, (unsigned char) 0x1d};
+    unsigned char aucKey2[] = {0x6d, 0x22, 0xa5, 0x1d};
 
-    unsigned char aucKey3[] = {(unsigned char) 0x09, (unsigned char) 0xf1, (unsigned char) 0x73, (unsigned char) 0xba};
+    unsigned char aucKey3[] = {0x09, 0xf1, 0x73, 0xba};
 
-    unsigned char aucInput0[] = {(unsigned char) 0x72, (unsigned char) 0x3d, (unsigned char) 0x38, (unsigned char) 0xae};
+    unsigned char aucInput0[] = {0x72, 0x3d, 0x38, 0xae};
 
-    unsigned char aucInput1[] = {(unsigned char) 0xa5, (unsigned char) 0x51, (unsigned char) 0x0f, (unsigned char) 0x58,
-                                 (unsigned char) 0xda, (unsigned char) 0x91, (unsigned char) 0xcd, (unsigned char) 0xc2,
-                                 (unsigned char) 0x4b, (unsigned char) 0x40, (unsigned char) 0xd7, (unsigned char) 0xff,
-                                 (unsigned char) 0x00, (unsigned char) 0xe0, (unsigned char) 0x8b, (unsigned char) 0x68};
+    unsigned char aucInput1[] = {0xa5, 0x51, 0x0f, 0x58,
+                                 0xda, 0x91, 0xcd, 0xc2,
+                                 0x4b, 0x40, 0xd7, 0xff,
+                                 0x00, 0xe0, 0x8b, 0x68};
 
-    unsigned char aucOutput00[] = {(unsigned char) 0x72, (unsigned char) 0x3d, (unsigned char) 0x38, (unsigned char) 0xae};
-    unsigned char aucOutput01[] = {(unsigned char) 0xa5, (unsigned char) 0x51, (unsigned char) 0x0f, (unsigned char) 0x58,
-                                 (unsigned char) 0xda, (unsigned char) 0x91, (unsigned char) 0xcd, (unsigned char) 0xc2,
-                                 (unsigned char) 0x4b, (unsigned char) 0x40, (unsigned char) 0xd7, (unsigned char) 0xff,
-                                 (unsigned char) 0x00, (unsigned char) 0xe0, (unsigned char) 0x8b, (unsigned char) 0x68};
-    unsigned char aucOutput10[] = {(unsigned char) 0x72, (unsigned char) 0x3d, (unsigned char) 0x38, (unsigned char) 0xaf};
-    unsigned char aucOutput11[] = {(unsigned char) 0xa5, (unsigned char) 0x51, (unsigned char) 0x0f, (unsigned char) 0x59,
-                                 (unsigned char) 0xda, (unsigned char) 0x91, (unsigned char) 0xcd, (unsigned char) 0xc3,
-                                 (unsigned char) 0x4b, (unsigned char) 0x40, (unsigned char) 0xd7, (unsigned char) 0xfe,
-                                 (unsigned char) 0x00, (unsigned char) 0xe0, (unsigned char) 0x8b, (unsigned char) 0x69};
-    unsigned char aucOutput20[] = {(unsigned char) 0x1f, (unsigned char) 0x1f, (unsigned char) 0x9d, (unsigned char) 0xb3};
-    unsigned char aucOutput21[] = {(unsigned char) 0xc8, (unsigned char) 0x73, (unsigned char) 0xaa, (unsigned char) 0x45,
-                                 (unsigned char) 0xb7, (unsigned char) 0xb3, (unsigned char) 0x68, (unsigned char) 0xdf,
-                                 (unsigned char) 0x26, (unsigned char) 0x62, (unsigned char) 0x72, (unsigned char) 0xe2,
-                                 (unsigned char) 0x6d, (unsigned char) 0xc2, (unsigned char) 0x2e, (unsigned char) 0x75};
-    unsigned char aucOutput30[] = {(unsigned char) 0x7b, (unsigned char) 0xcc, (unsigned char) 0x4b, (unsigned char) 0x14};
-    unsigned char aucOutput31[] =  {(unsigned char) 0xac, (unsigned char) 0xa0, (unsigned char) 0x7c, (unsigned char) 0xe2,
-                                 (unsigned char) 0xd3, (unsigned char) 0x60, (unsigned char) 0xbe, (unsigned char) 0x78,
-                                 (unsigned char) 0x42, (unsigned char) 0xb1, (unsigned char) 0xa4, (unsigned char) 0x45,
-                                 (unsigned char) 0x09, (unsigned char) 0x11, (unsigned char) 0xf8, (unsigned char) 0xd2};
+    unsigned char aucInput2[] = {0x00, 0x00, 0x00, 0x05}; 
+
+    unsigned char aucOutput00[] = {0x72, 0x3d, 0x38, 0xae};
+
+    unsigned char aucOutput01[] = {0xa5, 0x51, 0x0f, 0x58,
+                                   0xda, 0x91, 0xcd, 0xc2,
+                                   0x4b, 0x40, 0xd7, 0xff,
+                                   0x00, 0xe0, 0x8b, 0x68};
+
+    unsigned char aucOutput10[] = {0x72, 0x3d, 0x38, 0xaf};
+
+    unsigned char aucOutput11[] = {0xa5, 0x51, 0x0f, 0x59,
+                                   0xda, 0x91, 0xcd, 0xc3,
+                                   0x4b, 0x40, 0xd7, 0xfe,
+                                   0x00, 0xe0, 0x8b, 0x69};
+
+    unsigned char aucOutput20[] = {0x1f, 0x1f, 0x9d, 0xb3};
+
+    unsigned char aucOutput21[] = {0xc8, 0x73, 0xaa, 0x45,
+                                   0xb7, 0xb3, 0x68, 0xdf,
+                                   0x26, 0x62, 0x72, 0xe2,
+                                   0x6d, 0xc2, 0x2e, 0x75};
+
+    unsigned char aucOutput30[] = {0x7b, 0xcc, 0x4b, 0x14};
+
+    unsigned char aucOutput31[] = {0xac, 0xa0, 0x7c, 0xe2,
+                                   0xd3, 0x60, 0xbe, 0x78,
+                                   0x42, 0xb1, 0xa4, 0x45,
+                                   0x09, 0x11, 0xf8, 0xd2};
+
+    unsigned char aucOutput12[] = {0x00, 0x00, 0x00, 0x04};
 
     unsigned char aucBufferShort[4];
     unsigned char aucBufferLong[16];
@@ -115,6 +126,9 @@ static void testBasics()
 
     xor_decrypt(aucOutput31, aucBufferLong, 16, aucKey3);
     ASSURE(memcmp(aucBufferLong, aucInput1, 16) == 0);
+
+    xor_decrypt(aucInput2, aucBufferShort, 4, aucKey1);
+    ASSURE(memcmp(aucBufferShort, aucOutput12, 4) == 0); 
 
 
 }

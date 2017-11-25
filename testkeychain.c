@@ -23,40 +23,49 @@ static void assure(int iSuccessful, int iLineNum)
     }
 }
 
+static void phex(unsigned char *str)
+{
+    unsigned char i;
+
+    for (i = 0; i < 4; i++)
+        printf("%.2x", str[i]);
+    printf("\n");
+}
+
 static void testBasics()
 {
     KeyChain_T oKeyChain;
 
     char acRootKeyID_0[] = "0";
-    unsigned char aucRootEncKey_0[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00};
+    unsigned char aucRootEncKey_0[] = {0x01, 0x23, 0x45, 0x67};
 
     // dummy encrypted keys
     char acKeyID_00[] = "00";
-    unsigned char aucEncKey_00[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x01};
+    unsigned char aucEncKey_00[] = {0x00, 0x00, 0x00, 0x01};
 
     char acKeyID_01[] = "01";
-    unsigned char aucEncKey_01[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x02};
+    unsigned char aucEncKey_01[] = {0x00, 0x00, 0x00, 0x02};
 
     char acKeyID_02[] = "02";
-    unsigned char aucEncKey_02[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x03};
+    unsigned char aucEncKey_02[] = {0x00, 0x00, 0x00, 0x03};
 
     char acKeyID_000[] = "000";
-    unsigned char aucEncKey_000[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x04};
+    unsigned char aucEncKey_000[] = {0x00, 0x00, 0x00, 0x04};
 
     char acKeyID_010[] = "010";
-    unsigned char aucEncKey_010[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x05};
+    unsigned char aucEncKey_010[] = {0x00, 0x00, 0x00, 0x05};
 
     char acKeyID_011[] = "011";
-    unsigned char aucEncKey_011[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x06};
+    unsigned char aucEncKey_011[] = {0x00, 0x00, 0x00, 0x06};
 
     char acKeyID_0000[] = "0000";
-    unsigned char aucEncKey_0000[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x07};
+    unsigned char aucEncKey_0000[] = {0x00, 0x00, 0x00, 0x07};
 
     char acKeyID_0001[] = "0001";
-    unsigned char aucEncKey_0001[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x08};    
+    unsigned char aucEncKey_0001[] = {0x00, 0x00, 0x00, 0x08};    
 
     // dummy hashes
-    unsigned char aucDummyHash[] = {(unsigned char) 0x00, (unsigned char) 0x01, (unsigned char) 0x02, (unsigned char) 0x03};  
+    unsigned char aucDummyHash[] = {0x00, 0x01, 0x02, 0x03};  
 
     char *pcResult;
     unsigned char *pucResult;
@@ -80,7 +89,8 @@ static void testBasics()
     ASSURE(iValue == 0);
 
     pucResult = KeyChain_getKey(oKeyChain, acRootKeyID_0);
-    // printf("root key: %s\n", pcResult);
+    printf("root get key: ");
+    phex(pucResult);
     ASSURE(memcmp(pucResult, aucRootEncKey_0, 4) == 0);
 
     /* add 00 as a child of the root key 0 */
@@ -91,7 +101,8 @@ static void testBasics()
     ASSURE(iValue == 1);
 
     pucResult = KeyChain_getKey(oKeyChain, acKeyID_00);
-    // printf("key id 00: %s\n", pcResult);
+    printf("00 get key: ");
+    phex(pucResult);
     ASSURE(memcmp(pucResult, aucEncKey_00, 4) == 0);
 
     pucResult = KeyChain_getKey(oKeyChain, acKeyID_01);
@@ -118,11 +129,13 @@ static void testBasics()
     ASSURE(iValue == 0);
 
     pucResult = KeyChain_getKey(oKeyChain, acKeyID_01);
-    // printf("key id 01: %s\n", pcResult);
+    printf("01 get key: ");
+    phex(pucResult);
     ASSURE(memcmp(pucResult, aucEncKey_01, 4) == 0);
 
     pucResult = KeyChain_getKey(oKeyChain, acKeyID_000);
-    // printf("key id 000: %s\n", pcResult);
+    printf("000 get key: ");
+    phex(pucResult);
     ASSURE(memcmp(pucResult, aucEncKey_000, 4) == 0);
 
     /* try to remove root */

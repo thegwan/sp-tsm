@@ -4,6 +4,7 @@
 /*--------------------------------------------------------------------*/
 
 #include "keychain.h"
+#include "keycrypto.h"
 /* #include "aes.c"   https://github.com/kokke/tiny-AES-c */
 #include <stdlib.h>  /* malloc, free, inlining code possible? */
 #include <string.h>  /* really only need strcpy and strlen, could 
@@ -85,8 +86,8 @@ KeyChain_T KeyChain_new(void)
     char *pcRootKeyID;
     unsigned char *pucRootEncKey;
     unsigned char *pucRootHash;
-    unsigned char aucDefaultRootEncKey[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00};
-    unsigned char aucDummyHash[] = {(unsigned char) 0x00, (unsigned char) 0x01, (unsigned char) 0x02, (unsigned char) 0x03};
+    unsigned char aucDefaultRootEncKey[] = {0x01, 0x23, 0x45, 0x67};
+    unsigned char aucDummyHash[] = {0x00, 0x01, 0x02, 0x03};
 
     oKeyChain = (KeyChain_T)malloc(sizeof(struct KeyChain));
     if (oKeyChain == NULL)
@@ -107,7 +108,7 @@ KeyChain_T KeyChain_new(void)
         return NULL;
     memcpy(pucRootEncKey, aucDefaultRootEncKey, 4); // dummy UMK
 
-    pucRootHash = (unsigned char *)malloc(17 * sizeof(unsigned char));  // 32 bits
+    pucRootHash = (unsigned char *)malloc(4 * sizeof(unsigned char));  // 32 bits
     if (pucRootHash == NULL)
         return NULL;
     memcpy(pucRootHash, aucDummyHash, 4); // dummy root hash
@@ -148,7 +149,15 @@ static void freeNodes(struct KeyNode *psNode)
         free(psNode);
     }
 }
+///////////////////////////////////////////////////
+static void phex(unsigned char *str)
+{
+    unsigned char i;
 
+    for (i = 0; i < 4; i++)
+        printf("%.2x", str[i]);
+    printf("\n");
+}
 
 /*--------------------------------------------------------------------*/
 
@@ -170,7 +179,7 @@ int KeyChain_getNumKeys(KeyChain_T oKeyChain)
 /*--------------------------------------------------------------------*/
 
 /* Helper function to get keynode of pcKeyID */
-static struct KeyNode *getKey(struct KeyNode *psNode, char *pcKeyID)
+static struct KeyNode *getKeyNode(struct KeyNode *psNode, char *pcKeyID)
 {
     int currDepth;
 
@@ -180,7 +189,7 @@ static struct KeyNode *getKey(struct KeyNode *psNode, char *pcKeyID)
             if (strlen(pcKeyID) == currDepth+1)
                 return psNode;
             else
-                return getKey(psNode->psChild, pcKeyID);
+                return getKeyNode(psNode->psChild, pcKeyID);
         }
         psNode = psNode->psNext;
     }
@@ -196,11 +205,29 @@ int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID)
     assert(oKeyChain != NULL);
     assert(pcKeyID != NULL);
 
-    psResultNode = getKey(oKeyChain->psRoot, pcKeyID);
+    psResultNode = getKeyNode(oKeyChain->psRoot, pcKeyID);
     if (psResultNode != NULL)
         return 1;
     return 0;
 
+}
+
+static unsigned char *getPlainKey(struct KeyNode *psNode)
+{
+    static unsigned char aucPlainKey[4];
+    unsigned char *pucParentPlainKey;
+
+    if (psNode->psParent == NULL)     // is root, return UMK
+        return psNode->pucEncKey;
+    pucParentPlainKey = getPlainKey(psNode->psParent);
+    printf("$$$");
+    phex(pucParentPlainKey);
+    // printf("child");
+    // phex(psNode->pucEncKey);
+    xor_decrypt(psNode->pucEncKey, aucPlainKey, 4, pucParentPlainKey);
+    // printf("ret");
+    // phex(aucPlainKey);
+    return aucPlainKey;
 }
 
 /*--------------------------------------------------------------------*/
@@ -212,9 +239,9 @@ unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID)
     assert(oKeyChain != NULL);
     assert(pcKeyID != NULL);
 
-    psResultNode = getKey(oKeyChain->psRoot, pcKeyID);
+    psResultNode = getKeyNode(oKeyChain->psRoot, pcKeyID);
     if (psResultNode != NULL)
-        return psResultNode->pucEncKey;
+        return getPlainKey(psResultNode);
     return NULL;
 
 }
@@ -224,24 +251,24 @@ unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID)
 int KeyChain_addKey(KeyChain_T oKeyChain, 
                     char *pcParentKeyID,
                     char *pcKeyID, 
-                    unsigned char *pucEncKey)
+                    unsigned char *pucKey)
 {
     struct KeyNode *psNewNode;
     struct KeyNode *psParentNode;
     struct KeyNode *psParentIter;
     char *pcKeyIDCpy;
-    unsigned char *pucEncKeyCpy;
+    unsigned char *pucEncKey;
     unsigned char *pucHash;
 
-    unsigned char aucDummyHash[] = {(unsigned char) 0x00, (unsigned char) 0x01, (unsigned char) 0x02, (unsigned char) 0x03};  
+    unsigned char aucDummyHash[] = {0x00, 0x01, 0x02, 0x03};  
 
     assert(oKeyChain != NULL);
     assert(pcParentKeyID != NULL);
     assert(pcKeyID != NULL);
-    assert(pucEncKey != NULL);
+    assert(pucKey != NULL);
 
     // find parent node
-    psParentNode = getKey(oKeyChain->psRoot, pcParentKeyID);
+    psParentNode = getKeyNode(oKeyChain->psRoot, pcParentKeyID);
     if (psParentNode == NULL)
         return 0;
 
@@ -259,11 +286,16 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
         return 0;
     strcpy(pcKeyIDCpy, pcKeyID);
 
-    // make defensive copy of encrypted key
-    pucEncKeyCpy = (unsigned char *)malloc(4 * sizeof(unsigned char));  // 32 bit
-    if (pucEncKeyCpy == NULL)
+    pucEncKey = (unsigned char *)malloc(4 * sizeof(unsigned char));  // 32 bit
+    if (pucEncKey == NULL)
         return 0;
-    memcpy(pucEncKeyCpy, pucEncKey, 4);
+    memset(pucEncKey, 0, 4);
+    xor_encrypt(pucKey, pucEncKey, 4, getPlainKey(psParentNode));
+    // printf("adding keyid %s with encrypted key: ", pcKeyIDCpy);
+    // phex(pucEncKey);
+    // printf("the plaintext key was: ");
+    // phex(pucKey);
+    // printf("----------------\n");
 
     pucHash = (unsigned char *)malloc(4 * sizeof(unsigned char));
     if (pucHash == NULL)
@@ -271,7 +303,7 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
     memcpy(pucHash, aucDummyHash, 4); // dummy hash
     
     psNewNode->pcKeyID = pcKeyIDCpy;
-    psNewNode->pucEncKey = pucEncKeyCpy;
+    psNewNode->pucEncKey = pucEncKey;
     psNewNode->pucHash = pucHash;  // dummy hash
     
     psNewNode->iDepth = strlen(pcParentKeyID);

@@ -7,9 +7,19 @@
 #include <assert.h>
 #include <stdlib.h> 
 #include <string.h>
+#include <stdio.h>
 
 #define KEYLEN 4    // 32 bit keys
 
+
+static void phex(unsigned char *str)
+{
+    unsigned char i;
+
+    for (i = 0; i < 4; i++)
+        printf("%.2x", str[i]);
+    printf("\n");
+}
 
 /*--------------------------------------------------------------------*/
 
@@ -26,10 +36,18 @@ void xor_encrypt(unsigned char *pucInput,
     assert(pucKey != NULL);
     assert(uiLength % KEYLEN == 0);
 
+
     memcpy(pucOutput, pucInput, uiLength);
     for (i = 0; i < uiLength; i++) {
         pucOutput[i] ^= pucKey[i % KEYLEN];
     }
+
+    printf("Input:");
+    phex(pucInput);
+        printf("Key:");
+    phex(pucKey);
+        printf("Output:");
+    phex(pucOutput);
 }
 
 /*--------------------------------------------------------------------*/
