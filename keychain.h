@@ -41,9 +41,9 @@ int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID);
 
 /* Return the 32 bit encrypted key of pcKeyID in oKeyChain.
    *** Modify to return the plaintext key ***
-   Return 0 if not found. */
+   Return NULL if not found. */
 
-unsigned int KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID);
+unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
 
@@ -56,7 +56,7 @@ unsigned int KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID);
 int KeyChain_addKey(KeyChain_T oKeyChain, 
                     char *pcParentKeyID,
                     char *pcKeyID, 
-                    unsigned int uiEncKey);
+                    unsigned char *pucEncKey);
 
 /*--------------------------------------------------------------------*/
 

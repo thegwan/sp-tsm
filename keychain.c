@@ -36,10 +36,10 @@ struct KeyNode
     char *pcKeyID;
 
     /* 32 bit encrypted key, encrypted by the parent key */
-    unsigned int uiEncKey;
+    unsigned char *pucEncKey;
 
     /* 32 bit keyed hash of the key record */
-    unsigned int uiHash;
+    unsigned char *pucHash;
 
     /* depth of node */
     int iDepth;
@@ -83,8 +83,10 @@ KeyChain_T KeyChain_new(void)
     KeyChain_T oKeyChain;
     struct KeyNode *psRoot;
     char *pcRootKeyID;
-    // char *pcRootEncKey;
-    // char *pcRootHash;
+    unsigned char *pucRootEncKey;
+    unsigned char *pucRootHash;
+    unsigned char aucDefaultRootEncKey[] = {(unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00, (unsigned char) 0x00};
+    unsigned char aucDummyHash[] = {(unsigned char) 0x00, (unsigned char) 0x01, (unsigned char) 0x02, (unsigned char) 0x03};
 
     oKeyChain = (KeyChain_T)malloc(sizeof(struct KeyChain));
     if (oKeyChain == NULL)
@@ -100,20 +102,20 @@ KeyChain_T KeyChain_new(void)
         return NULL;
     strcpy(pcRootKeyID, "0");
 
-    // pcRootEncKey = (char *)malloc(17 * sizeof(char));  // 128 bits
-    // if (pcRootEncKey == NULL)
-    //     return NULL;
-    // strcpy(pcRootEncKey, "0000000000000000"); // dummy UMK
+    pucRootEncKey = (unsigned char *)malloc(4 * sizeof(unsigned char));  // 32 bits
+    if (pucRootEncKey == NULL)
+        return NULL;
+    memcpy(pucRootEncKey, aucDefaultRootEncKey, 4); // dummy UMK
 
-    // pcRootHash = (char *)malloc(17 * sizeof(char));  // 128 bits
-    // if (pcRootHash == NULL)
-    //     return NULL;
-    // strcpy(pcRootHash, "1111111111111111"); // dummy root hash
+    pucRootHash = (unsigned char *)malloc(17 * sizeof(unsigned char));  // 32 bits
+    if (pucRootHash == NULL)
+        return NULL;
+    memcpy(pucRootHash, aucDummyHash, 4); // dummy root hash
 
 
     psRoot->pcKeyID = pcRootKeyID;
-    psRoot->uiEncKey = 0x00000000;
-    psRoot->uiHash = 0x11111111;
+    psRoot->pucEncKey = pucRootEncKey;
+    psRoot->pucHash = pucRootHash;
     psRoot->iDepth = 0;
     psRoot->iNumChildren = 0;
     psRoot->psChild = NULL;
@@ -139,8 +141,8 @@ static void freeNodes(struct KeyNode *psNode)
 
         /* free key data */
         free(psNode->pcKeyID);
-        // free(psNode->pcEncKey);
-        // free(psNode->pcHash);
+        free(psNode->pucEncKey);
+        free(psNode->pucHash);
         // free(psNode->psMetaData);
 
         free(psNode);
@@ -203,7 +205,7 @@ int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID)
 
 /*--------------------------------------------------------------------*/
 
-unsigned int KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID)
+unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID)
 {
     struct KeyNode *psResultNode;
 
@@ -212,8 +214,8 @@ unsigned int KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID)
 
     psResultNode = getKey(oKeyChain->psRoot, pcKeyID);
     if (psResultNode != NULL)
-        return psResultNode->uiEncKey;
-    return 0;
+        return psResultNode->pucEncKey;
+    return NULL;
 
 }
 
@@ -222,19 +224,21 @@ unsigned int KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID)
 int KeyChain_addKey(KeyChain_T oKeyChain, 
                     char *pcParentKeyID,
                     char *pcKeyID, 
-                    unsigned int uiEncKey)
+                    unsigned char *pucEncKey)
 {
     struct KeyNode *psNewNode;
     struct KeyNode *psParentNode;
     struct KeyNode *psParentIter;
     char *pcKeyIDCpy;
-    // char *pcEncKeyCpy;
-    // char *pcHash;
+    unsigned char *pucEncKeyCpy;
+    unsigned char *pucHash;
+
+    unsigned char aucDummyHash[] = {(unsigned char) 0x00, (unsigned char) 0x01, (unsigned char) 0x02, (unsigned char) 0x03};  
 
     assert(oKeyChain != NULL);
     assert(pcParentKeyID != NULL);
     assert(pcKeyID != NULL);
-    // assert(pcEncKey != NULL);
+    assert(pucEncKey != NULL);
 
     // find parent node
     psParentNode = getKey(oKeyChain->psRoot, pcParentKeyID);
@@ -255,20 +259,20 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
         return 0;
     strcpy(pcKeyIDCpy, pcKeyID);
 
-    // // make defensive copy of encrypted key
-    // pcEncKeyCpy = (char *)malloc(strlen(pcEncKey) + 1);
-    // if (pcEncKeyCpy == NULL)
-    //     return 0;
-    // strcpy(pcEncKeyCpy, pcEncKey);
+    // make defensive copy of encrypted key
+    pucEncKeyCpy = (unsigned char *)malloc(4 * sizeof(unsigned char));  // 32 bit
+    if (pucEncKeyCpy == NULL)
+        return 0;
+    memcpy(pucEncKeyCpy, pucEncKey, 4);
 
-    // pcHash = (char *)malloc(17 * sizeof(char));
-    // if (pcHash == NULL)
-    //     return 0;
-    // strcpy(pcHash, "0123456789abcdef"); // dummy hash
+    pucHash = (unsigned char *)malloc(4 * sizeof(unsigned char));
+    if (pucHash == NULL)
+        return 0;
+    memcpy(pucHash, aucDummyHash, 4); // dummy hash
     
     psNewNode->pcKeyID = pcKeyIDCpy;
-    psNewNode->uiEncKey = uiEncKey;
-    psNewNode->uiHash = 0x11111111;  // dummy hash
+    psNewNode->pucEncKey = pucEncKeyCpy;
+    psNewNode->pucHash = pucHash;  // dummy hash
     
     psNewNode->iDepth = strlen(pcParentKeyID);
     psNewNode->iNumChildren = 0;
@@ -349,8 +353,8 @@ int KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID)
 
     (oKeyChain->iNumKeys) -= (psResultNode->iNumChildren + 1);
     free(psResultNode->pcKeyID);
-    // free(psResultNode->pcEncKey);
-    // free(psResultNode->pcHash);
+    free(psResultNode->pucEncKey);
+    free(psResultNode->pucHash);
 
     free(psResultNode);
 
