@@ -1,9 +1,7 @@
 /*--------------------------------------------------------------------*/
-/* testkeychain.c                                                        */
+/* testkeychain.c                                                     */
 /* Author: Gerry Wan                                                  */
 /*--------------------------------------------------------------------*/
-
-
 
 #include "keychain.h"
 #include <stdlib.h>
@@ -30,38 +28,39 @@ static void testBasics()
     KeyChain_T oKeyChain;
 
     char acRootKeyID_0[] = "0";
-    char acRootEncKey_0[] = "0000000000000000";
+    unsigned int uiRootEncKey_0 = 0x00000000;
 
     char acKeyID_00[] = "00";
-    char acEncKey_00[] = "0000000000000001";   // dummy encrypted keys
+    unsigned int uiEncKey_00 = 0x00000001;   // dummy encrypted keys
 
     char acKeyID_01[] = "01";
-    char acEncKey_01[] = "0000000000000002";
+    unsigned int uiEncKey_01 = 0x00000002;
 
     char acKeyID_02[] = "02";
-    char acEncKey_02[] = "0000000000000003";
+    unsigned int uiEncKey_02 = 0x00000003;
 
     char acKeyID_000[] = "000";
-    char acEncKey_000[] = "0000000000000004";
+    unsigned int uiEncKey_000 = 0x00000004;
 
     char acKeyID_010[] = "010";
-    char acEncKey_010[] = "0000000000000005";
+    unsigned int uiEncKey_010 = 0x00000005;
 
     char acKeyID_011[] = "011";
-    char acEncKey_011[] = "0000000000000006";
+    unsigned int uiEncKey_011 = 0x00000006;
 
     char acKeyID_0000[] = "0000";
-    char acEncKey_0000[] = "0000000000000007";
+    unsigned int uiEncKey_0000 = 0x00000007;
 
     char acKeyID_0001[] = "0001";
-    char acEncKey_0001[] = "0000000000000008";    
+    unsigned int uiEncKey_0001 = 0x00000008;    
 
 
-    char acKey1Hash[] = "1111111111111111";  // dummy hashes
-    char acKey2Hash[] = "1111111111111112";
-    char acKey3Hash[] = "1111111111111113";
+    unsigned int uiKey1Hash = 0x11111111;  // dummy hashes
+    unsigned int uiKey2Hash = 0x11111112;
+    unsigned int uiKey3Hash = 0x11111113;
 
     char *pcResult;
+    unsigned int uiResult;
     int iValue;
 
     printf("------------------------------------------------------\n");
@@ -81,51 +80,51 @@ static void testBasics()
     iValue = KeyChain_contains(oKeyChain, acKeyID_00);
     ASSURE(iValue == 0);
 
-    pcResult = KeyChain_getKey(oKeyChain, acRootKeyID_0);
-    // printf("root key: %s\n", pcResult);
-    ASSURE(strcmp(pcResult, acRootEncKey_0) == 0);
+    uiResult = KeyChain_getKey(oKeyChain, acRootKeyID_0);
+    printf("root key: %x\n", uiResult);
+    ASSURE(uiResult == uiRootEncKey_0);
 
     /* add 00 as a child of the root key 0 */
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_00, acEncKey_00);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_00, uiEncKey_00);
     ASSURE(iValue == 1);
 
     iValue = KeyChain_contains(oKeyChain, acKeyID_00);
     ASSURE(iValue == 1);
 
-    pcResult = KeyChain_getKey(oKeyChain, acKeyID_00);
-    // printf("key id 00: %s\n", pcResult);
-    ASSURE(strcmp(pcResult, acEncKey_00) == 0);
+    uiResult = KeyChain_getKey(oKeyChain, acKeyID_00);
+    printf("key id 00: %x\n", uiResult);
+    ASSURE(uiResult == uiEncKey_00);
 
-    pcResult = KeyChain_getKey(oKeyChain, acKeyID_01);
-    ASSURE(pcResult == NULL);
+    uiResult = KeyChain_getKey(oKeyChain, acKeyID_01);
+    ASSURE(uiResult == 0);  // default NULL value
 
     iValue = KeyChain_getNumKeys(oKeyChain);
     ASSURE(iValue == 1);
 
     /* try to add key whose parent does not exist */
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_010, acEncKey_010);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_010, uiEncKey_010);
     ASSURE(iValue == 0);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_01, acEncKey_01);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_01, uiEncKey_01);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_00, acKeyID_000, acEncKey_000);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_00, acKeyID_000, uiEncKey_000);
     ASSURE(iValue == 1);
 
     iValue = KeyChain_getNumKeys(oKeyChain);
     ASSURE(iValue == 3);
 
     /* try to add key that is already in the chain */
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_01, acEncKey_01);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_01, uiEncKey_01);
     ASSURE(iValue == 0);
 
-    pcResult = KeyChain_getKey(oKeyChain, acKeyID_01);
-    // printf("key id 01: %s\n", pcResult);
-    ASSURE(strcmp(pcResult, acEncKey_01) == 0);
+    uiResult = KeyChain_getKey(oKeyChain, acKeyID_01);
+    printf("key id 01: %x\n", uiResult);
+    ASSURE(uiResult == uiEncKey_01);
 
-    pcResult = KeyChain_getKey(oKeyChain, acKeyID_000);
-    // printf("key id 000: %s\n", pcResult);
-    ASSURE(strcmp(pcResult, acEncKey_000) == 0);
+    uiResult = KeyChain_getKey(oKeyChain, acKeyID_000);
+    printf("key id 000: %x\n", uiResult);
+    ASSURE(uiResult == uiEncKey_000);
 
     /* try to remove root */
     iValue = KeyChain_removeKey(oKeyChain, acRootKeyID_0);
@@ -137,19 +136,19 @@ static void testBasics()
     iValue = KeyChain_getNumKeys(oKeyChain);
     ASSURE(iValue == 3);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_02, acEncKey_02);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_02, uiEncKey_02);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_010, acEncKey_010);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_010, uiEncKey_010);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_011, acEncKey_011);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_011, uiEncKey_011);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0000, acEncKey_0000);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0000, uiEncKey_0000);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0001, acEncKey_0001);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0001, uiEncKey_0001);
     ASSURE(iValue == 1);
 
     iValue = KeyChain_contains(oKeyChain, acKeyID_0001);
@@ -158,8 +157,8 @@ static void testBasics()
     iValue = KeyChain_getNumKeys(oKeyChain);
     ASSURE(iValue == 8);
 
-    pcResult = KeyChain_getKey(oKeyChain, acKeyID_0000);
-    ASSURE(strcmp(pcResult, acEncKey_0000) == 0);    
+    uiResult = KeyChain_getKey(oKeyChain, acKeyID_0000);
+    ASSURE(uiResult == uiEncKey_0000);    
 
     iValue = KeyChain_removeKey(oKeyChain, acKeyID_0000);
     ASSURE(iValue == 1);
@@ -195,7 +194,7 @@ static void testBasics()
     ASSURE(iValue == 4);
 
     /* add key back in */
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0000, acEncKey_0000);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0000, uiEncKey_0000);
     ASSURE(iValue == 1);
 
     iValue = KeyChain_getNumKeys(oKeyChain);

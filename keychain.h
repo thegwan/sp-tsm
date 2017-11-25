@@ -39,15 +39,15 @@ int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
 
-/* Return a pointer to the encrypted key of pcKeyID in oKeyChain.
+/* Return the 32 bit encrypted key of pcKeyID in oKeyChain.
    *** Modify to return the plaintext key ***
-   Return NULL if not found. */
+   Return 0 if not found. */
 
-char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID);
+unsigned int KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
 
-/* Add the key pcKeyID with the encrypted key pcEncKey as a child of 
+/* Add the key pcKeyID with the encrypted key uiEncKey as a child of 
    the parent key pcParentKeyID in oKeyChain. Return 1 on success, 
    0 on failure. 
    *** Modify to add the plaintext key ***
@@ -56,7 +56,7 @@ char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID);
 int KeyChain_addKey(KeyChain_T oKeyChain, 
                     char *pcParentKeyID,
                     char *pcKeyID, 
-                    char *pcEncKey);
+                    unsigned int uiEncKey);
 
 /*--------------------------------------------------------------------*/
 
