@@ -8,15 +8,15 @@ clean:
 	rm -f *.o
 
 # Dependency rules for file targets
-memkeychain: testkeychain.o keychain.o keycrypto.o
-	gcc -g testkeychain.o keychain.o keycrypto.o -o memkeychain
-testkeychain: testkeychain.o keychain.o keycrypto.o
-	gcc testkeychain.o keychain.o keycrypto.o -o testkeychain
+memkeychain: testkeychain.o keychain.o keycrypto.o sha256.o
+	gcc -g testkeychain.o keychain.o keycrypto.o  sha256.o -o memkeychain
+testkeychain: testkeychain.o keychain.o keycrypto.o sha256.o
+	gcc testkeychain.o keychain.o keycrypto.o sha256.o -o testkeychain
 testkeycrypto: testkeycrypto.o keycrypto.o sha256.o
 	gcc testkeycrypto.o keycrypto.o sha256.o -o testkeycrypto
-testkeychain.o: testkeychain.c keychain.h
+testkeychain.o: testkeychain.c keychain.h sha256.h
 	gcc -c testkeychain.c
-keychain.o: keychain.c keychain.h keycrypto.h
+keychain.o: keychain.c keychain.h keycrypto.h sha256.h
 	gcc -c keychain.c
 testkeycrypto.o: testkeycrypto.c keychain.h sha256.h
 	gcc -c testkeycrypto.c

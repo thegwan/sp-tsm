@@ -5,6 +5,7 @@
 
 #include "keychain.h"
 #include "keycrypto.h"
+#include "sha256.h"
 /* #include "aes.c"   https://github.com/kokke/tiny-AES-c */
 #include <stdlib.h>  /* malloc, free, inlining code possible? */
 #include <string.h>  /* really only need strcpy and strlen, could 
@@ -12,7 +13,8 @@
 #include <assert.h>  /* asserts, inlining code? necessary?  */
 #include <stdio.h>
 
-// #define ROOT_KEY_ID "0"
+#define INTBUFLEN (sizeof(int) * 4 + 1)            
+#define ARRBUFLEN (sizeof(unsigned char) * 8 + 1)
 
 /*--------------------------------------------------------------------*/
 
@@ -77,6 +79,58 @@ struct KeyChain
     struct KeyNode *psRoot;
 };
 
+static void print_hash(unsigned char hash[])
+{
+   int idx;
+   for (idx=0; idx < 32; idx++)
+      printf("%02x",hash[idx]);
+   printf("\n");
+}
+/*--------------------------------------------------------------------*/
+
+/* 256 bit hash of key ID, the encrypted key, depth, number of
+   children, and parent key ID. */
+
+static void hashKeyNode(struct KeyNode *psNode, unsigned char *hash)
+{
+    SHA256_CTX ctx;
+    char int_buf[INTBUFLEN];
+    char key_buf[ARRBUFLEN];
+    char *pcParentKeyID;
+
+    assert(psNode != NULL);
+    assert(hash != NULL);
+    assert(psNode->pcKeyID != NULL);
+    assert(psNode->pucEncKey != NULL);
+
+    memset(int_buf, 0, INTBUFLEN);
+    memset(key_buf, 0, ARRBUFLEN);
+
+    if (psNode->psParent == NULL)
+        pcParentKeyID = "0";
+    else
+        pcParentKeyID = psNode->psParent->pcKeyID;
+
+    sha256_init(&ctx);
+
+    sha256_update(&ctx, psNode->pcKeyID, strlen(psNode->pcKeyID));
+
+    arrToString(psNode->pucEncKey, key_buf);
+    sha256_update(&ctx, key_buf, strlen(key_buf));
+
+    intToString(psNode->iDepth, int_buf);
+    sha256_update(&ctx, int_buf, strlen(int_buf));
+
+    intToString(psNode->iNumChildren, int_buf);
+    sha256_update(&ctx, int_buf, strlen(int_buf));
+
+    sha256_update(&ctx, pcParentKeyID, strlen(pcParentKeyID));
+
+    sha256_final(&ctx, hash);
+    print_hash(hash);
+
+}
+
 /*--------------------------------------------------------------------*/
 
 KeyChain_T KeyChain_new(void)
@@ -86,8 +140,9 @@ KeyChain_T KeyChain_new(void)
     char *pcRootKeyID;
     unsigned char *pucRootEncKey;
     unsigned char *pucRootHash;
+    unsigned char aucHashBuf[32];
     unsigned char aucDefaultRootEncKey[] = {0x01, 0x23, 0x45, 0x67};
-    unsigned char aucDummyHash[] = {0x00, 0x01, 0x02, 0x03};
+
 
     oKeyChain = (KeyChain_T)malloc(sizeof(struct KeyChain));
     if (oKeyChain == NULL)
@@ -111,18 +166,20 @@ KeyChain_T KeyChain_new(void)
     pucRootHash = (unsigned char *)malloc(4 * sizeof(unsigned char));  // 32 bits
     if (pucRootHash == NULL)
         return NULL;
-    memcpy(pucRootHash, aucDummyHash, 4); // dummy root hash
-
 
     psRoot->pcKeyID = pcRootKeyID;
     psRoot->pucEncKey = pucRootEncKey;
-    psRoot->pucHash = pucRootHash;
+
     psRoot->iDepth = 0;
     psRoot->iNumChildren = 0;
     psRoot->psChild = NULL;
     psRoot->psNext = NULL;
     psRoot->psParent = NULL;
     // psRoot->psMetaData = NULL;
+
+    hashKeyNode(psRoot, aucHashBuf);
+    memcpy(pucRootHash, aucHashBuf, 4);  // first 32 bits;
+    psRoot->pucHash = pucRootHash;
 
     oKeyChain->iNumKeys = 0;
     oKeyChain->psRoot = psRoot;
@@ -271,9 +328,8 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
     unsigned char *pucEncKey;
     unsigned char *pucHash;
 
-    unsigned char aucParentKeyBuf[4];
-
-    unsigned char aucDummyHash[] = {0x00, 0x01, 0x02, 0x03};  
+    unsigned char aucParentKeyBuf[4];   // 32 bit key length
+    unsigned char aucHashBuf[32];       // 256 bit SHA-256 
 
     assert(oKeyChain != NULL);
     assert(pcParentKeyID != NULL);
@@ -313,18 +369,21 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
     pucHash = (unsigned char *)malloc(4 * sizeof(unsigned char));
     if (pucHash == NULL)
         return 0;
-    memcpy(pucHash, aucDummyHash, 4); // dummy hash
     
     psNewNode->pcKeyID = pcKeyIDCpy;
     psNewNode->pucEncKey = pucEncKey;
-    psNewNode->pucHash = pucHash;  // dummy hash
-    
+
     psNewNode->iDepth = strlen(pcParentKeyID);
     psNewNode->iNumChildren = 0;
 
     psNewNode->psNext = psParentNode->psChild;
     psNewNode->psChild = NULL;
     psNewNode->psParent = psParentNode;
+
+    hashKeyNode(psNewNode, aucHashBuf);
+    memcpy(pucHash, aucHashBuf, 4);    // first 32 bits
+    psNewNode->pucHash = pucHash; 
+
     psParentNode->psChild = psNewNode;
 
     psParentIter = psParentNode;
