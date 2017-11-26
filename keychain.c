@@ -149,15 +149,6 @@ static void freeNodes(struct KeyNode *psNode)
         free(psNode);
     }
 }
-///////////////////////////////////////////////////
-static void phex(unsigned char *str)
-{
-    unsigned char i;
-
-    for (i = 0; i < 4; i++)
-        printf("%.2x", str[i]);
-    printf("\n");
-}
 
 /*--------------------------------------------------------------------*/
 
@@ -212,6 +203,9 @@ int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID)
 
 }
 
+/*--------------------------------------------------------------------*/
+
+/* Helper function to get plaintext key of psNode */
 static unsigned char *getPlainKey(struct KeyNode *psNode,
                                   unsigned char *pucOutput)
 {
@@ -248,6 +242,23 @@ unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID,
 
 /*--------------------------------------------------------------------*/
 
+unsigned char *KeyChain_getEncryptedKey(KeyChain_T oKeyChain, char *pcKeyID)
+{
+
+    struct KeyNode *psResultNode;
+
+    assert(oKeyChain != NULL);
+    assert(pcKeyID != NULL);
+
+    psResultNode = getKeyNode(oKeyChain->psRoot, pcKeyID);
+    if (psResultNode != NULL)
+        return psResultNode->pucEncKey;
+    return NULL;
+}
+
+
+/*--------------------------------------------------------------------*/
+
 int KeyChain_addKey(KeyChain_T oKeyChain, 
                     char *pcParentKeyID,
                     char *pcKeyID, 
@@ -268,6 +279,10 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
     assert(pcParentKeyID != NULL);
     assert(pcKeyID != NULL);
     assert(pucKey != NULL);
+
+    // make sure key ID is a valid child of the parent
+    if (strlen(pcParentKeyID) + 1 != strlen(pcKeyID))
+        return 0;
 
     // find parent node
     psParentNode = getKeyNode(oKeyChain->psRoot, pcParentKeyID);
@@ -333,7 +348,6 @@ static struct KeyNode *removeKey(struct KeyNode *psCurrNode,
     while (psCurrNode != NULL) {
         currDepth = psCurrNode->iDepth;
         if ((psCurrNode->pcKeyID)[currDepth] == pcKeyID[currDepth]) {
-                // printf("correct digit");
             if (strlen(pcKeyID) == currDepth+1) {
                 if (psPrevNode->iDepth == psCurrNode->iDepth) {
                     psPrevNode->psNext = psCurrNode->psNext;
@@ -372,8 +386,6 @@ int KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID)
                              pcKeyID);
     if (psResultNode == NULL)
         return 0;
-    //printf("removd: %s\n", psResultNode->pcKeyID);
-    //printf("numremove: %d\n", psResultNode->iNumChildren + 1);
 
     psParentIter = psResultNode->psParent;
     while (psParentIter != NULL) {

@@ -39,18 +39,24 @@ int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
 
-/* Decrypt and return the 32 bit key of pcKeyID in oKeyChain.
+/* Decrypt the 32 bit plaintext key of pcKeyID in oKeyChain and 
+   place the result in pucOutput. Return a pointer to pucOutput.
    Return NULL if not found. */
 
 unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID, unsigned char *pucOutput);
 
 /*--------------------------------------------------------------------*/
 
+/* Return the 32 bit encrypted key of pcKeyID in oKeyChain.
+   Return NULL if not found. */
+
+unsigned char *KeyChain_getEncryptedKey(KeyChain_T oKeyChain, char *pcKeyID);
+
+/*--------------------------------------------------------------------*/
+
 /* Add the key pcKeyID with the key pucKey as a child of 
    the parent key pcParentKeyID in oKeyChain. Return 1 on success, 
-   0 on failure. 
-   *** Modify to add the plaintext key ***
-   */
+   0 on failure. */
 
 int KeyChain_addKey(KeyChain_T oKeyChain, 
                     char *pcParentKeyID,
@@ -60,24 +66,12 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
 /*--------------------------------------------------------------------*/
 
 /* Remove the key with key ID pcKeyID from oKeyChain. Return 1 if
-   successful, 0 otherwise.
-   */
+   successful, 0 otherwise. */
 
 int KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
 
-
-/*--------------------------------------------------------------------*/
-
-
-/*--------------------------------------------------------------------*/
-
-/* this should probably be a TSM function */
-
-/* verify whole keychain? may not be necessary. */
-
-int KeyChain_verify(KeyChain_T oKeyChain);
 
 
 #endif
