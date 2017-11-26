@@ -26,6 +26,8 @@ static void assure(int iSuccessful, int iLineNum)
     }
 }
 
+/*--------------------------------------------------------------------*/
+
 static void print_hash(unsigned char hash[])
 {
    int idx;
@@ -33,6 +35,8 @@ static void print_hash(unsigned char hash[])
       printf("%02x",hash[idx]);
    printf("\n");
 }
+
+/*--------------------------------------------------------------------*/
 
 static void phex(unsigned char *str)
 {
@@ -42,6 +46,8 @@ static void phex(unsigned char *str)
         printf("%.2x", str[i]);
     printf("\n");
 }
+
+/*--------------------------------------------------------------------*/
 
 static void testBasics()
 {
@@ -157,6 +163,8 @@ static void testBasics()
 
 }
 
+/*--------------------------------------------------------------------*/
+
 static void testHash()
 {
 
@@ -214,6 +222,8 @@ static void testHash()
     sha256_final(&ctx,hash);
     print_hash(hash);
 }
+
+/*--------------------------------------------------------------------*/
 
 int main(void)
 {

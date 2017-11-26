@@ -23,6 +23,10 @@ static void assure(int iSuccessful, int iLineNum)
     }
 }
 
+/*--------------------------------------------------------------------*/
+
+/* print hex */
+
 static void phex(unsigned char *str)
 {
     unsigned char i;
@@ -31,6 +35,8 @@ static void phex(unsigned char *str)
         printf("%.2x", str[i]);
     printf("\n");
 }
+
+/*--------------------------------------------------------------------*/
 
 static void testBasics()
 {
@@ -76,6 +82,8 @@ static void testBasics()
     oKeyChain = KeyChain_new();
     ASSURE(oKeyChain != NULL);
 
+    //----- contains root key
+
     iValue = KeyChain_getNumKeys(oKeyChain);
     ASSURE(iValue == 0);
 
@@ -90,6 +98,8 @@ static void testBasics()
 
     iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_00, aucKey_00);
     ASSURE(iValue == 1);
+
+    //----- contains root, 00
 
     iValue = KeyChain_contains(oKeyChain, acKeyID_00);
     ASSURE(iValue == 1);
@@ -119,6 +129,8 @@ static void testBasics()
     /* try to add key that is already in the chain */
     iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_01, aucKey_01);
     ASSURE(iValue == 0);
+
+    //----- contains root, 00, 01, 000
 
     pucResult = KeyChain_getKey(oKeyChain, acKeyID_01, aucBuf);
     ASSURE(memcmp(pucResult, aucKey_01, 4) == 0);
@@ -151,6 +163,8 @@ static void testBasics()
     iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0001, aucKey_0001);
     ASSURE(iValue == 1);
 
+    //----- contains root, 00, 01, 02, 000, 010, 011, 0000, 0001
+
     iValue = KeyChain_contains(oKeyChain, acKeyID_0001);
     ASSURE(iValue == 1);
 
@@ -163,6 +177,8 @@ static void testBasics()
     iValue = KeyChain_removeKey(oKeyChain, acKeyID_0000);
     ASSURE(iValue == 1);
 
+    //----- contains root, 00, 01, 02, 000, 010, 011, 0001
+
     iValue = KeyChain_contains(oKeyChain, acKeyID_0000);
     ASSURE(iValue == 0);
 
@@ -174,6 +190,26 @@ static void testBasics()
 
     iValue = KeyChain_removeKey(oKeyChain, acKeyID_01);
     ASSURE(iValue == 1);
+
+    //----- contains root, 00, 02, 000, 0001
+
+    iValue = KeyChain_verifyKey(oKeyChain, acRootKeyID_0);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_verifyKey(oKeyChain, acKeyID_00);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_verifyKey(oKeyChain, acKeyID_02);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_verifyKey(oKeyChain, acKeyID_000);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_verifyKey(oKeyChain, acKeyID_0001);
+    ASSURE(iValue == 1);
+
+    iValue = KeyChain_verifyKey(oKeyChain, acKeyID_01);
+    ASSURE(iValue == 0);
 
     iValue = KeyChain_contains(oKeyChain, acKeyID_01);
     ASSURE(iValue == 0);
@@ -197,6 +233,8 @@ static void testBasics()
     iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0000, aucKey_0000);
     ASSURE(iValue == 1);
 
+    //----- contains root, 00, 02, 000, 0000, 0001
+
     iValue = KeyChain_getNumKeys(oKeyChain);
     ASSURE(iValue == 5);
 
@@ -215,6 +253,8 @@ static void testBasics()
     iValue = KeyChain_removeKey(oKeyChain, acKeyID_00);
     ASSURE(iValue == 1);
 
+    //----- contains root, 02
+
     iValue = KeyChain_contains(oKeyChain, acKeyID_00);
     ASSURE(iValue == 0);
 
@@ -231,6 +271,7 @@ static void testBasics()
 
 }
 
+/*--------------------------------------------------------------------*/
 
 static void testVerticalTree()
 {
@@ -353,6 +394,8 @@ static void testVerticalTree()
     KeyChain_free(oKeyChain);
 
 }
+
+/*--------------------------------------------------------------------*/
 
 static void testHorizontalTree()
 {
@@ -506,6 +549,7 @@ static void testHorizontalTree()
 
 }
 
+/*--------------------------------------------------------------------*/
 
 int main(void)
 {

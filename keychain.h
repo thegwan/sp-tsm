@@ -41,16 +41,23 @@ int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID);
 
 /* Decrypt the 32 bit plaintext key of pcKeyID in oKeyChain and 
    place the result in pucOutput. Return a pointer to pucOutput.
-   Return NULL if not found. */
+   Return NULL if key is not in keychain. */
 
 unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID, unsigned char *pucOutput);
 
 /*--------------------------------------------------------------------*/
 
 /* Return the 32 bit encrypted key of pcKeyID in oKeyChain.
-   Return NULL if not found. */
+   Return NULL if key is not in keychain. */
 
 unsigned char *KeyChain_getEncryptedKey(KeyChain_T oKeyChain, char *pcKeyID);
+
+/*--------------------------------------------------------------------*/
+
+/* Return the 32 bit keyed hash of pcKeyID in oKeyChain.
+   Return NULL if key is not in keychain. */
+
+unsigned char *KeyChain_getHash(KeyChain_T oKeyChain, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
 
@@ -69,6 +76,13 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
    successful, 0 otherwise. */
 
 int KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID);
+
+/*--------------------------------------------------------------------*/
+
+/* Verify the integrity of the key pcKeyID in oKeyChain. Return 1 if
+   verified, 0 otherwise. */
+
+int KeyChain_verifyKey(KeyChain_T oKeyChain, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
 
