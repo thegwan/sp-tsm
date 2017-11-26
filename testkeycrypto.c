@@ -4,12 +4,15 @@
 /*--------------------------------------------------------------------*/
 
 #include "keycrypto.h"
+#include "sha256.h"
 #include <stdlib.h>
 #include <string.h>  
 #include <assert.h>
 #include <stdio.h>
 
 #define ASSURE(i) assure(i, __LINE__)
+#define INTBUFLEN (sizeof(int) * 4 + 1)            
+#define ARRBUFLEN (sizeof(unsigned char) * 8 + 1)
 
 /* If !iSuccessful, print a message to stdout indicating that the
    test failed. */
@@ -23,9 +26,25 @@ static void assure(int iSuccessful, int iLineNum)
     }
 }
 
+static void print_hash(unsigned char hash[])
+{
+   int idx;
+   for (idx=0; idx < 32; idx++)
+      printf("%02x",hash[idx]);
+   printf("\n");
+}
+
+static void phex(unsigned char *str)
+{
+    unsigned char i;
+
+    for (i = 0; i < 4; i++)
+        printf("%.2x", str[i]);
+    printf("\n");
+}
+
 static void testBasics()
 {
-
     unsigned char aucKey0[] = {0x00, 0x00, 0x00, 0x00};
 
     unsigned char aucKey1[] = {0x00, 0x00, 0x00, 0x01};  
@@ -75,6 +94,11 @@ static void testBasics()
 
     unsigned char aucBufferShort[4];
     unsigned char aucBufferLong[16];
+
+    printf("------------------------------------------------------\n");
+    printf("Testing XOR Encrypt and Decrypt.\n");
+    printf("No output should appear here:\n");
+    fflush(stdout);
 
     memset(aucBufferShort, 0, 4);
     memset(aucBufferLong, 0, 16);
@@ -133,14 +157,68 @@ static void testBasics()
 
 }
 
-int main(void)
+static void testHash()
 {
+
+    char aucKeyID_0[] = "0";
+    char aucKeyID_00[] = "00";
+    char aucKeyID_000[] = "000";
+    int i = 5;
+    int j = 2147483647;
+    int k = 5214748;
+    unsigned char aucKey0[] = {0x01, 0x23, 0x45, 0x67};
+    unsigned char aucKey1[] = {0x01, 0x23, 0x00, 0x67};
+
+    int iter;
+    char intBuf[INTBUFLEN];
+    char ucBuf[ARRBUFLEN];
+    unsigned char hash[32];
+    SHA256_CTX ctx;
+
     printf("------------------------------------------------------\n");
-    printf("Testing XOR Encrypt and Decrypt.\n");
-    printf("No output should appear here:\n");
+    printf("Testing Hashing.\n");
+    printf("Some 32 byte hash outputs should appear here:\n");
     fflush(stdout);
 
+    sha256_init(&ctx);
+    sha256_update(&ctx,aucKeyID_0,strlen(aucKeyID_0));
+    sha256_update(&ctx,aucKeyID_00,strlen(aucKeyID_00));
+    sha256_final(&ctx,hash);
+    print_hash(hash);
+
+    sha256_init(&ctx);
+    sha256_update(&ctx,aucKeyID_000,strlen(aucKeyID_000));
+    sha256_final(&ctx,hash);
+    print_hash(hash);
+
+    sha256_init(&ctx);
+    intToString(i, intBuf);
+    sha256_update(&ctx,intBuf,strlen(intBuf));
+    intToString(j, intBuf);
+    // printf("String: %s\n", intBuf);
+    sha256_update(&ctx,intBuf,strlen(intBuf));
+    sha256_final(&ctx,hash);
+    print_hash(hash);
+
+    sha256_init(&ctx);
+    intToString(k, intBuf);
+    // printf("String: %s\n", intBuf);
+    sha256_update(&ctx,intBuf,strlen(intBuf));
+    sha256_final(&ctx,hash);
+    print_hash(hash);
+
+    sha256_init(&ctx);
+    arrToString(aucKey0, ucBuf);
+    // printf("String: %s, %d\n", ucBuf, strlen(ucBuf));
+    sha256_update(&ctx,ucBuf,strlen(ucBuf));
+    sha256_final(&ctx,hash);
+    print_hash(hash);
+}
+
+int main(void)
+{
     testBasics();
+    testHash();
 
     printf("------------------------------------------------------\n");
     printf("End of tests\n");

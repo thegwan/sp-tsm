@@ -12,14 +12,16 @@ memkeychain: testkeychain.o keychain.o keycrypto.o
 	gcc -g testkeychain.o keychain.o keycrypto.o -o memkeychain
 testkeychain: testkeychain.o keychain.o keycrypto.o
 	gcc testkeychain.o keychain.o keycrypto.o -o testkeychain
-testkeycrypto: testkeycrypto.o keycrypto.o
-	gcc testkeycrypto.o keycrypto.o -o testkeycrypto
+testkeycrypto: testkeycrypto.o keycrypto.o sha256.o
+	gcc testkeycrypto.o keycrypto.o sha256.o -o testkeycrypto
 testkeychain.o: testkeychain.c keychain.h
 	gcc -c testkeychain.c
 keychain.o: keychain.c keychain.h keycrypto.h
 	gcc -c keychain.c
-testkeycrypto.o: testkeycrypto.c keychain.h
+testkeycrypto.o: testkeycrypto.c keychain.h sha256.h
 	gcc -c testkeycrypto.c
 keycrypto.o: keycrypto.c keycrypto.h
 	gcc -c keycrypto.c
+sha256.o: sha256.c sha256.h
+	gcc -c sha256.c
 
