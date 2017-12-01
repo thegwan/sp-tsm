@@ -37,6 +37,13 @@ int AddKeyToChain(KeyChain_T oKeyChain, char *pcParentKeyID, char *pcKeyID)
 
 /*--------------------------------------------------------------------*/
 
+int DeleteKeyFromChain(KeyChain_T oKeyChain, char *pcKeyID)
+{
+    return KeyChain_removeKey(oKeyChain, pcKeyID);
+}
+
+/*--------------------------------------------------------------------*/
+
 int Encrypt(const char *inputFileName, const char *outputFileName,
              KeyChain_T oKeyChain, char *pcKeyID)
 {

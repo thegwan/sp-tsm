@@ -51,26 +51,36 @@ static void phex(unsigned char *str)
 
 int main(void)
 {
-    printf("------------------------------------------------------\n");
     printf("Begin tests\n");
+    printf("------------------------------------------------------\n");
 
+    int status;
     KeyChain_T oKeyChain;
 
     oKeyChain = KeyChain_new();
-    AddKeyToChain(oKeyChain, "0", "00");
+    status = AddKeyToChain(oKeyChain, "0", "00");
+    if (status) printf("added key!\n");
     sleep(1);
-    AddKeyToChain(oKeyChain, "0", "01");
+    status = AddKeyToChain(oKeyChain, "0", "01");
+    if (status) printf("added key!\n");
 
-    Encrypt("file.txt", "file.enc", oKeyChain, "00");
-    printf("encrypted file.txt into file.enc\n");
-    Decrypt("file.enc", "file.dec", oKeyChain, "00");
-    printf("decrypted file.enc into file.dec\n");
+    // small text file
+    status = Encrypt("file.txt", "file.enc", oKeyChain, "00");
+    if (status) printf("encrypted file.txt into file.enc\n");
+    else printf("encryption failed\n");
 
+    status = Decrypt("file.enc", "file.dec", oKeyChain, "00");
+    if (status) printf("decrypted file.enc into file.dec\n");
+    else printf("decryption failed\n");
 
-    Encrypt("elephant.jpg", "elephantenc.jpg", oKeyChain, "01");
-    printf("encrypted elephant.jpg into elephantenc.jpg\n");
-    Decrypt("elephantenc.jpg", "elephantdec.jpg", oKeyChain, "01");
-    printf("decrypted elephantenc.jpg into elephantdec.jpg\n");
+    // image
+    status = Encrypt("elephant.jpg", "elephantenc.jpg", oKeyChain, "01");
+    if (status) printf("encrypted elephant.jpg into elephantenc.jpg\n");
+    else printf("encryption failed\n");
+
+    status = Decrypt("elephantenc.jpg", "elephantdec.jpg", oKeyChain, "01");
+    if (status) printf("decrypted elephantenc.jpg into elephantdec.jpg\n");
+    else printf("decryption failed\n");
 
     KeyChain_free(oKeyChain);
     

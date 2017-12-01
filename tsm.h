@@ -18,6 +18,12 @@ int AddKeyToChain(KeyChain_T oKeyChain, char *pcParentKeyID, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
 
+/* Delete pcKeyID from the keychain */
+
+int DeleteKeyFromChain(KeyChain_T oKeyChain, char *pcKeyID);
+
+/*--------------------------------------------------------------------*/
+
 /* Encrypt input into output, return 1 on success, 0 on failure */
 
 int Encrypt(const char *inputFileName, const char *outputFileName,
