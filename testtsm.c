@@ -53,23 +53,23 @@ int main(void)
 {
     printf("------------------------------------------------------\n");
     printf("Begin tests\n");
-    
+
     KeyChain_T oKeyChain;
-    unsigned char aucKey_00[] = {0x41, 0x45, 0x0f, 0xc1};
-    unsigned char aucKey_01[] = {0xc1, 0xa3, 0xca, 0x67};
 
     oKeyChain = KeyChain_new();
-    (void)KeyChain_addKey(oKeyChain, "0", "00", aucKey_00);
-    (void)KeyChain_addKey(oKeyChain, "0", "01", aucKey_01);
+    AddKeyToChain(oKeyChain, "0", "00");
+    sleep(1);
+    AddKeyToChain(oKeyChain, "0", "01");
 
     Encrypt("file.txt", "file.enc", oKeyChain, "00");
     printf("encrypted file.txt into file.enc\n");
     Decrypt("file.enc", "file.dec", oKeyChain, "00");
     printf("decrypted file.enc into file.dec\n");
 
-    Encrypt("elephant.jpg", "elephantenc.jpg", oKeyChain, "00");
+
+    Encrypt("elephant.jpg", "elephantenc.jpg", oKeyChain, "01");
     printf("encrypted elephant.jpg into elephantenc.jpg\n");
-    Decrypt("elephantenc.jpg", "elephantdec.jpg", oKeyChain, "00");
+    Decrypt("elephantenc.jpg", "elephantdec.jpg", oKeyChain, "01");
     printf("decrypted elephantenc.jpg into elephantdec.jpg\n");
 
     KeyChain_free(oKeyChain);

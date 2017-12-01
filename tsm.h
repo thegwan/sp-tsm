@@ -11,6 +11,13 @@
 
 /*--------------------------------------------------------------------*/
 
+/* Generate a random 32 bit key and add it to the keychain under 
+   the parent key id */
+
+int AddKeyToChain(KeyChain_T oKeyChain, char *pcParentKeyID, char *pcKeyID);
+
+/*--------------------------------------------------------------------*/
+
 /* Encrypt input into output, return 1 on success, 0 on failure */
 
 int Encrypt(const char *inputFileName, const char *outputFileName,

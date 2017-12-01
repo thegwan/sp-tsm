@@ -12,14 +12,28 @@
 #include <stdio.h>
 
 /* For debugging */
-// static void phex(unsigned char *str)
-// {
-//     unsigned char i;
+static void phex(unsigned char *str)
+{
+    unsigned char i;
 
-//     for (i = 0; i < 4; i++)
-//         printf("%.2x", str[i]);
-//     printf("\n");
-// }
+    for (i = 0; i < 4; i++)
+        printf("%.2x", str[i]);
+    printf("\n");
+}
+
+/*--------------------------------------------------------------------*/
+
+int AddKeyToChain(KeyChain_T oKeyChain, char *pcParentKeyID, char *pcKeyID)
+{
+    // generate random key
+    srand(time(NULL));
+    unsigned char key[] = {rand() & 0xff,
+                           rand() & 0xff,
+                           rand() & 0xff,
+                           rand() & 0xff};
+    // phex(key);
+    return KeyChain_addKey(oKeyChain, pcParentKeyID, pcKeyID, key);
+}
 
 /*--------------------------------------------------------------------*/
 
