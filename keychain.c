@@ -242,7 +242,7 @@ KeyChain_T KeyChain_new(void)
     if (psRoot == NULL)
         return NULL;
 
-    pcRootKeyID = (char *)malloc(2 * sizeof(char));
+    pcRootKeyID = (char *)malloc(sizeof(char) + 1);
     if (pcRootKeyID == NULL)
         return NULL;
     strcpy(pcRootKeyID, "0");
@@ -295,8 +295,6 @@ int KeyChain_getNumKeys(KeyChain_T oKeyChain)
 
 /*--------------------------------------------------------------------*/
 
-
-
 int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID)
 {
     struct KeyNode *psResultNode;
@@ -312,8 +310,6 @@ int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID)
 }
 
 /*--------------------------------------------------------------------*/
-
-
 
 unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID,
                                unsigned char *pucOutput)
