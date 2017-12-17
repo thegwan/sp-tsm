@@ -9,9 +9,9 @@
 #include <string.h>
 #include <stdio.h>
 
-#define KEYLEN 4                                   // 32 bit keys
-#define INTBUFLEN (sizeof(int) * 4 + 1)            
-#define ARRBUFLEN (sizeof(unsigned char) * 8 + 1)
+#define KEYLEN 8                                   // 64 bit keys
+#define INTBUFLEN (sizeof(int) * 8 + 1)            
+#define ARRBUFLEN (sizeof(unsigned char) * 16 + 1)
 
 
 /*--------------------------------------------------------------------*/

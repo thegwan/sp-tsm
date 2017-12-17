@@ -12,10 +12,10 @@
 #include <assert.h>  /* asserts  */
 // #include <stdio.h>
 
-#define KEYLEN    4
-#define HASHLEN   4
-#define INTBUFLEN (sizeof(int) * 4 + 1)            
-#define ARRBUFLEN (sizeof(unsigned char) * 8 + 1)
+#define KEYLEN    8  // bytes
+#define HASHLEN   8  // bytes
+#define INTBUFLEN (sizeof(int) * 8 + 1)            
+#define ARRBUFLEN (sizeof(unsigned char) * 16 + 1)
 
 /*--------------------------------------------------------------------*/
 
@@ -188,6 +188,8 @@ static unsigned char *getPlainKey(struct KeyNode *psNode,
     return pucOutput;
 }
 
+/*--------------------------------------------------------------------*/
+
 /* Helper function to remove keynode with id pcKeyID */
 static struct KeyNode *removeKeyNode(struct KeyNode *psCurrNode, 
                                     struct KeyNode *psPrevNode,
@@ -229,8 +231,9 @@ KeyChain_T KeyChain_new(void)
     char *pcRootKeyID;
     unsigned char *pucRootEncKey;
     unsigned char *pucRootHash;
-    unsigned char aucHashBuf[32];
-    unsigned char aucDefaultRootEncKey[] = {0x01, 0x23, 0x45, 0x67};
+    unsigned char aucHashBuf[32];   // 256 bit hash
+    unsigned char aucDefaultRootEncKey[] = {0x01, 0x23, 0x45, 0x67,
+                                            0x89, 0xab, 0xcd, 0xef};
 
 
     oKeyChain = (KeyChain_T)malloc(sizeof(struct KeyChain));
@@ -247,12 +250,12 @@ KeyChain_T KeyChain_new(void)
         return NULL;
     strcpy(pcRootKeyID, "0");
 
-    pucRootEncKey = (unsigned char *)malloc(KEYLEN * sizeof(unsigned char));  // 32 bits
+    pucRootEncKey = (unsigned char *)malloc(KEYLEN * sizeof(unsigned char));  // 64 bits
     if (pucRootEncKey == NULL)
         return NULL;
     memcpy(pucRootEncKey, aucDefaultRootEncKey, KEYLEN); // dummy UMK
 
-    pucRootHash = (unsigned char *)malloc(HASHLEN * sizeof(unsigned char));  // 32 bits
+    pucRootHash = (unsigned char *)malloc(HASHLEN * sizeof(unsigned char));  // 64 bits
     if (pucRootHash == NULL)
         return NULL;
 
@@ -267,7 +270,7 @@ KeyChain_T KeyChain_new(void)
     // psRoot->psMetaData = NULL;
 
     hashKeyNode(psRoot, aucHashBuf);
-    memcpy(pucRootHash, aucHashBuf, HASHLEN);  // first 32 bits;
+    memcpy(pucRootHash, aucHashBuf, HASHLEN);  // first 64 bits;
     psRoot->pucHash = pucRootHash;
 
     oKeyChain->iNumKeys = 0;
@@ -371,7 +374,7 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
     unsigned char *pucEncKey;
     unsigned char *pucHash;
 
-    unsigned char aucParentKeyBuf[KEYLEN];   // 32 bit key length
+    unsigned char aucParentKeyBuf[KEYLEN];   // 64 bit key length
     unsigned char aucHashBuf[32];       // 256 bit SHA-256 
 
     assert(oKeyChain != NULL);
@@ -402,7 +405,7 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
         return 0;
     strcpy(pcKeyIDCpy, pcKeyID);
 
-    pucEncKey = (unsigned char *)malloc(KEYLEN * sizeof(unsigned char));  // 32 bit
+    pucEncKey = (unsigned char *)malloc(KEYLEN * sizeof(unsigned char));  // 64 bit
     if (pucEncKey == NULL)
         return 0;
     memset(pucEncKey, 0, KEYLEN);
@@ -424,7 +427,7 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
     psNewNode->psParent = psParentNode;
 
     hashKeyNode(psNewNode, aucHashBuf);
-    memcpy(pucHash, aucHashBuf, HASHLEN);    // first 32 bits
+    memcpy(pucHash, aucHashBuf, HASHLEN);    // first 64 bits
     psNewNode->pucHash = pucHash; 
 
     psParentNode->psChild = psNewNode;
@@ -493,3 +496,5 @@ int KeyChain_verifyKey(KeyChain_T oKeyChain, char *pcKeyID)
 }
 
 /*--------------------------------------------------------------------*/
+
+

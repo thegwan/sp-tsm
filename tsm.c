@@ -11,13 +11,24 @@
 #include <string.h>
 #include <stdio.h>
 
+#define KEYLEN 8
+
 /* For debugging */
 static void phex(unsigned char *str)
 {
     unsigned char i;
 
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < KEYLEN; i++)
         printf("%.2x", str[i]);
+    printf("\n");
+}
+
+static void pch(unsigned char *str)
+{
+    unsigned char i;
+
+    for (i = 0; i < KEYLEN; i++)
+        printf("%c", str[i]);
     printf("\n");
 }
 
@@ -28,6 +39,10 @@ int AddKeyToChain(KeyChain_T oKeyChain, char *pcParentKeyID, char *pcKeyID)
     // generate random key
     srand(time(NULL));
     unsigned char key[] = {rand() & 0xff,
+                           rand() & 0xff,
+                           rand() & 0xff,
+                           rand() & 0xff,
+                           rand() & 0xff,
                            rand() & 0xff,
                            rand() & 0xff,
                            rand() & 0xff};
@@ -49,10 +64,11 @@ int Encrypt(const char *inputFileName, const char *outputFileName,
 {
     int c;
     int numRead;
+    int padded;
     FILE *fpi, *fpo;
-    unsigned char keybuf[4];
-    unsigned char inbuf[4];
-    unsigned char outbuf[4];
+    unsigned char keybuf[KEYLEN];
+    unsigned char inbuf[KEYLEN];
+    unsigned char outbuf[KEYLEN];
 
 
     // retrieve key
@@ -70,24 +86,23 @@ int Encrypt(const char *inputFileName, const char *outputFileName,
     if (fpo == NULL)
         return 0;
 
-    while ((numRead = fread(inbuf, 1, 4, fpi)) > 0) {
-        // printf("%d\n", numRead);
-        // printf("inbuf: %s\n", inbuf);
-        if (numRead == 3) {
-            inbuf[3] = 0;
+    padded = 0;
+    while ((numRead = fread(inbuf, 1, KEYLEN, fpi)) > 0) {
+        // printf("enc numread: %d\n", numRead);
+        // pch(inbuf);
+        if (numRead < KEYLEN) {
+            memset(inbuf+numRead, KEYLEN - numRead, KEYLEN - numRead);
+            padded = 1;
         }
-        else if (numRead == 2) {
-            inbuf[3] = 0;
-            inbuf[2] = 0;
-        }
-        else if (numRead == 1) {
-            inbuf[3] = 0;
-            inbuf[2] = 0;
-            inbuf[1] = 0;
-        }
-        xor_encrypt(inbuf, outbuf, 4, keybuf);
+        xor_encrypt(inbuf, outbuf, KEYLEN, keybuf);
         // printf("outbuf: %s\n", outbuf);
-        fwrite(outbuf, 1, 4, fpo);
+        fwrite(outbuf, 1, KEYLEN, fpo);
+    }
+
+    if (!padded) {
+        memset(inbuf, KEYLEN, KEYLEN);
+        xor_encrypt(inbuf, outbuf, KEYLEN, keybuf);
+        fwrite(outbuf, 1, KEYLEN, fpo);
     }
 
     fclose(fpi);
@@ -98,15 +113,31 @@ int Encrypt(const char *inputFileName, const char *outputFileName,
 
 /*--------------------------------------------------------------------*/
 
+static int isPadded(int pad, char *buf) {
+    int i;
+
+    if (!(1 <= pad && pad <= KEYLEN)) 
+        return 0;
+    for (i = 0; i < pad; i++) {
+        if (buf[KEYLEN - 1 - i] != pad)
+            return 0;
+    }
+    return 1;
+}
+
+/*--------------------------------------------------------------------*/
+
 int Decrypt(const char *inputFileName, const char *outputFileName,
              KeyChain_T oKeyChain, char *pcKeyID)
 {
     int c;
     int numRead;
+    int pad;
+    int padded;
     FILE *fpi, *fpo;
-    unsigned char keybuf[4];
-    unsigned char inbuf[4];
-    unsigned char outbuf[4];
+    unsigned char keybuf[KEYLEN];
+    unsigned char inbuf[KEYLEN];
+    unsigned char outbuf[KEYLEN];
 
 
     // retrieve key
@@ -124,24 +155,29 @@ int Decrypt(const char *inputFileName, const char *outputFileName,
     if (fpo == NULL)
         return 0;
 
-    while ((numRead = fread(inbuf, 1, 4, fpi)) > 0) {
-        // printf("%d\n", numRead);
-        // printf("inbuf: %s\n", inbuf);
-        if (numRead == 3) {
-            inbuf[3] = 0;
+    padded = 0;
+    while ((numRead = fread(inbuf, 1, KEYLEN, fpi)) > 0) {
+        // if prev block had padding
+        if (padded) {
+            // printf("filling in %d\n", pad);
+            fwrite(outbuf + KEYLEN - pad, 1, pad, fpo);
+            padded = 0;
         }
-        else if (numRead == 2) {
-            inbuf[3] = 0;
-            inbuf[2] = 0;
+        // printf("dec numread: %d\n", numRead);
+        // pch(inbuf);
+        if (numRead < KEYLEN) {
+            return 0;
         }
-        else if (numRead == 1) {
-            inbuf[3] = 0;
-            inbuf[2] = 0;
-            inbuf[1] = 0;
+
+        xor_decrypt(inbuf, outbuf, KEYLEN, keybuf);
+        pad = outbuf[KEYLEN-1];
+        padded = isPadded(pad, outbuf);
+        if (padded) {
+            //printf("%d\n", pad);
+            fwrite(outbuf, 1, KEYLEN - pad, fpo);
+        } else {
+            fwrite(outbuf, 1, KEYLEN, fpo);
         }
-        xor_decrypt(inbuf, outbuf, 4, keybuf);
-        // printf("outbuf: %s\n", outbuf);
-        fwrite(outbuf, 1, 4, fpo);
     }
 
     fclose(fpi);
