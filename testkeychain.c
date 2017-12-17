@@ -42,6 +42,7 @@ static void phex(unsigned char *str)
 static void testBasics()
 {
     KeyChain_T oKeyChain;
+    unsigned long umk = 0xefcdab8967452301;
 
     char acRootKeyID_0[] = "0";
     unsigned char aucRootEncKey_0[] = {0x01, 0x23, 0x45, 0x67,
@@ -89,7 +90,7 @@ static void testBasics()
     printf("No output should appear here:\n");
     fflush(stdout);
 
-    oKeyChain = KeyChain_new();
+    oKeyChain = KeyChain_new(umk);
     ASSURE(oKeyChain != NULL);
 
     //----- contains root key
@@ -287,9 +288,11 @@ static void testVerticalTree()
 {
     KeyChain_T oKeyChain;
 
+    unsigned long umk = 0x192ba72c;   // some umk
+
     char acRootKeyID[] = "0";
-    unsigned char aucRootEncKey_0[] = {0x01, 0x23, 0x45, 0x67,
-                                       0x89, 0xab, 0xcd, 0xef};
+    // unsigned char aucRootEncKey_0[] = {0x01, 0x23, 0x45, 0x67,
+    //                                    0x89, 0xab, 0xcd, 0xef};
 
     // dummy keys
     char acKeyID_1[] = "00";
@@ -330,7 +333,7 @@ static void testVerticalTree()
     printf("No output should appear here:\n");
     fflush(stdout);
 
-    oKeyChain = KeyChain_new();
+    oKeyChain = KeyChain_new(umk);
     ASSURE(oKeyChain != NULL);
 
     iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_1, aucKey_1);
@@ -419,9 +422,11 @@ static void testHorizontalTree()
 {
     KeyChain_T oKeyChain;
 
+    unsigned long umk = 0xb12ababa817;  // some umk
+
     char acRootKeyID[] = "0";
-    unsigned char aucRootEncKey_0[] = {0x01, 0x23, 0x45, 0x67,
-                                       0x89, 0xab, 0xcd, 0xef};
+    // unsigned char aucRootEncKey_0[] = {0x01, 0x23, 0x45, 0x67,
+    //                                    0x89, 0xab, 0xcd, 0xef};
 
     // dummy keys
     char acKeyID_0[] = "00";
@@ -474,7 +479,7 @@ static void testHorizontalTree()
     printf("No output should appear here:\n");
     fflush(stdout);
 
-    oKeyChain = KeyChain_new();
+    oKeyChain = KeyChain_new(umk);
     ASSURE(oKeyChain != NULL);
 
     iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_0, aucKey_0);

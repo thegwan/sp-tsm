@@ -6,8 +6,7 @@
 #include "keychain.h"
 #include "keycrypto.h"
 #include "sha256.h"
-/* #include "aes.c"   https://github.com/kokke/tiny-AES-c */
-#include <stdlib.h>  /* malloc, free, will sometimes syscall */
+#include <stdlib.h>
 #include <string.h>  /* memcpy, strcpy, strlen, memcmp, strcmp */
 #include <assert.h>  /* asserts  */
 // #include <stdio.h>
@@ -19,18 +18,6 @@
 
 /*--------------------------------------------------------------------*/
 
-/* Key metadata */
-
-struct MetaData
-{
-    int iType;
-
-    char *pcPolicy;
-    char *pcCertificate;
-    char *pcPublicKey;
-    char *pcMisc;
-};
-
 /* Each key is stored in a KeyNode, which are linked to form a key
    chain. */
 
@@ -39,10 +26,10 @@ struct KeyNode
     /* Key ID */
     char *pcKeyID;
 
-    /* 32 bit encrypted key, encrypted by the parent key */
+    /* 64 bit encrypted key, encrypted by the parent key */
     unsigned char *pucEncKey;
 
-    /* 32 bit keyed hash of the key record */
+    /* 64 bit keyed hash of the key record */
     unsigned char *pucHash;
 
     /* depth of node */
@@ -59,9 +46,6 @@ struct KeyNode
 
     /* pointer to the node's parent */
     struct KeyNode *psParent;
-
-    /* pointer to the key's metadata */
-    // struct MetaData *psMetaData;
 
 };
 
@@ -117,10 +101,6 @@ static void hashKeyNode(struct KeyNode *psNode, unsigned char *hash)
 
     intToString(psNode->iDepth, int_buf);
     sha256_update(&ctx, int_buf, strlen(int_buf));
-
-    /* number of children may change after removals */
-    // intToString(psNode->iNumChildren, int_buf);
-    // sha256_update(&ctx, int_buf, strlen(int_buf));
 
     sha256_update(&ctx, pcParentKeyID, strlen(pcParentKeyID));
 
@@ -224,7 +204,7 @@ static struct KeyNode *removeKeyNode(struct KeyNode *psCurrNode,
 /* Public functions:                                                  */
 /*--------------------------------------------------------------------*/
 
-KeyChain_T KeyChain_new(void)
+KeyChain_T KeyChain_new(unsigned long umk)
 {
     KeyChain_T oKeyChain;
     struct KeyNode *psRoot;
@@ -232,8 +212,10 @@ KeyChain_T KeyChain_new(void)
     unsigned char *pucRootEncKey;
     unsigned char *pucRootHash;
     unsigned char aucHashBuf[32];   // 256 bit hash
-    unsigned char aucDefaultRootEncKey[] = {0x01, 0x23, 0x45, 0x67,
-                                            0x89, 0xab, 0xcd, 0xef};
+    // unsigned char aucRootEncKey[] = {0x01, 0x23, 0x45, 0x67,
+    //                                         0x89, 0xab, 0xcd, 0xef};
+    unsigned char *aucRootEncKey;
+    aucRootEncKey = (unsigned char*)&umk;
 
 
     oKeyChain = (KeyChain_T)malloc(sizeof(struct KeyChain));
@@ -253,7 +235,8 @@ KeyChain_T KeyChain_new(void)
     pucRootEncKey = (unsigned char *)malloc(KEYLEN * sizeof(unsigned char));  // 64 bits
     if (pucRootEncKey == NULL)
         return NULL;
-    memcpy(pucRootEncKey, aucDefaultRootEncKey, KEYLEN); // dummy UMK
+    memcpy(pucRootEncKey, aucRootEncKey, KEYLEN);
+
 
     pucRootHash = (unsigned char *)malloc(HASHLEN * sizeof(unsigned char));  // 64 bits
     if (pucRootHash == NULL)

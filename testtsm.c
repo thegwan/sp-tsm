@@ -55,9 +55,10 @@ int main(void)
     printf("------------------------------------------------------\n");
 
     int status;
+    unsigned long umk = 0xefcdab8967452301;
     KeyChain_T oKeyChain;
 
-    oKeyChain = KeyChain_new();
+    oKeyChain = KeyChain_new(umk);
     status = AddKeyToChain(oKeyChain, "0", "00");
     if (status) printf("added key!\n");
     sleep(1);

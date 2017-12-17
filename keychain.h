@@ -16,7 +16,7 @@ typedef struct KeyChain *KeyChain_T;
 /* Return a new KeyChain object, or NULL
    if insufficient memory is available. */
 
-KeyChain_T KeyChain_new(void);
+KeyChain_T KeyChain_new(unsigned long umk);
 
 /*--------------------------------------------------------------------*/
 
