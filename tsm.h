@@ -14,7 +14,10 @@
 /* Generate a random 32 bit key and add it to the keychain under 
    the parent key id */
 
-int AddKeyToChain(KeyChain_T oKeyChain, char *pcParentKeyID, char *pcKeyID);
+int AddKeyToChain(KeyChain_T oKeyChain, 
+                char *pcParentKeyID, 
+                char *pcKeyID,
+                int iType);
 
 /*--------------------------------------------------------------------*/
 
@@ -37,19 +40,5 @@ int Decrypt(const char *inputFileName, const char *outputFileName,
             KeyChain_T oKeyChain, char *pcKeyID);
 
 /*--------------------------------------------------------------------*/
-
-/* Sign input file with private key pcKeyID, return 1 on success, 
-   0 on failure */
-
-int Sign(const char *inputFileName, const char *outputFileName,
-            KeyChain_T oKeyChain, char *pcKeyID);
-
-/*--------------------------------------------------------------------*/
-
-/* Verify input file was signed with key pcKeyID, return 1 on 
-   success, 0 on failure */
-
-int Verify(const char *inputFileName, KeyChain_T oKeyChain, char *pcKeyID);
-
 
 #endif

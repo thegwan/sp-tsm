@@ -199,7 +199,7 @@ static void testHash()
     print_hash(hash);
 
     sha256_init(&ctx);
-    arrToString(aucKey0, ucBuf);
+    arrToString(aucKey0, ucBuf, ARRBUFLEN);
     // printf("String: %s, %d\n", ucBuf, strlen(ucBuf));
     sha256_update(&ctx,ucBuf,strlen(ucBuf));
     sha256_final(&ctx,hash);

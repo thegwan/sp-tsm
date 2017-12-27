@@ -107,7 +107,7 @@ static void testBasics()
     pucResult = KeyChain_getKey(oKeyChain, acRootKeyID_0, aucBuf);
     ASSURE(memcmp(pucResult, aucRootEncKey_0, KEYLEN) == 0);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_00, aucKey_00);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_00, aucKey_00, 0);
     ASSURE(iValue == 1);
 
     //----- contains root, 00
@@ -125,20 +125,20 @@ static void testBasics()
     ASSURE(iValue == 1);
 
     /* try to add key whose parent does not exist */
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_010, aucKey_010);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_010, aucKey_010, 0);
     ASSURE(iValue == 0);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_01, aucKey_01);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_01, aucKey_01, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_00, acKeyID_000, aucKey_000);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_00, acKeyID_000, aucKey_000, 0);
     ASSURE(iValue == 1);
 
     iValue = KeyChain_getNumKeys(oKeyChain);
     ASSURE(iValue == 3);
 
     /* try to add key that is already in the chain */
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_01, aucKey_01);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_01, aucKey_01, 0);
     ASSURE(iValue == 0);
 
     //----- contains root, 00, 01, 000
@@ -159,19 +159,19 @@ static void testBasics()
     iValue = KeyChain_getNumKeys(oKeyChain);
     ASSURE(iValue == 3);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_02, aucKey_02);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID_0, acKeyID_02, aucKey_02, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_010, aucKey_010);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_010, aucKey_010, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_011, aucKey_011);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_01, acKeyID_011, aucKey_011, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0000, aucKey_0000);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0000, aucKey_0000, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0001, aucKey_0001);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0001, aucKey_0001, 0);
     ASSURE(iValue == 1);
 
     //----- contains root, 00, 01, 02, 000, 010, 011, 0000, 0001
@@ -184,6 +184,7 @@ static void testBasics()
 
     pucResult = KeyChain_getKey(oKeyChain, acKeyID_0000, aucBuf);
     ASSURE(memcmp(pucResult, aucKey_0000, KEYLEN) == 0);    
+
 
     iValue = KeyChain_removeKey(oKeyChain, acKeyID_0000);
     ASSURE(iValue == 1);
@@ -201,6 +202,7 @@ static void testBasics()
 
     iValue = KeyChain_removeKey(oKeyChain, acKeyID_01);
     ASSURE(iValue == 1);
+
 
     //----- contains root, 00, 02, 000, 0001
 
@@ -241,7 +243,7 @@ static void testBasics()
     ASSURE(iValue == 4);
 
     /* add key back in */
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0000, aucKey_0000);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_000, acKeyID_0000, aucKey_0000, 0);
     ASSURE(iValue == 1);
 
     //----- contains root, 00, 02, 000, 0000, 0001
@@ -336,25 +338,25 @@ static void testVerticalTree()
     oKeyChain = KeyChain_new(umk);
     ASSURE(oKeyChain != NULL);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_1, aucKey_1);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_1, aucKey_1, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_1, acKeyID_2, aucKey_2);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_1, acKeyID_2, aucKey_2, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_2, acKeyID_3, aucKey_3);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_2, acKeyID_3, aucKey_3, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_3, acKeyID_4, aucKey_4);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_3, acKeyID_4, aucKey_4, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_4, acKeyID_5, aucKey_5);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_4, acKeyID_5, aucKey_5, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_5, acKeyID_6, aucKey_6);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_5, acKeyID_6, aucKey_6, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_6, acKeyID_7, aucKey_7);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_6, acKeyID_7, aucKey_7, 0);
     ASSURE(iValue == 1);
 
     iValue = KeyChain_getNumKeys(oKeyChain);
@@ -384,7 +386,7 @@ static void testVerticalTree()
     iValue = KeyChain_removeKey(oKeyChain, acKeyID_4);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_4, acKeyID_2, aucKey_2);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_4, acKeyID_2, aucKey_2, 0);
     ASSURE(iValue == 0);
 
     iValue = KeyChain_getNumKeys(oKeyChain);
@@ -396,7 +398,7 @@ static void testVerticalTree()
     pucResult = KeyChain_getEncryptedKey(oKeyChain, acKeyID_7);
     ASSURE(pucResult == NULL);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_3, acKeyID_4, aucKey_4);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_3, acKeyID_4, aucKey_4, 0);
     ASSURE(iValue == 1);
 
     pucResult = KeyChain_getKey(oKeyChain, acKeyID_4, aucBuf);
@@ -405,7 +407,7 @@ static void testVerticalTree()
     iValue = KeyChain_contains(oKeyChain, acKeyID_4);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_3, acKeyID_7, aucKey_7);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_3, acKeyID_7, aucKey_7, 0);
     ASSURE(iValue == 0);
 
     iValue = KeyChain_getNumKeys(oKeyChain);
@@ -482,34 +484,34 @@ static void testHorizontalTree()
     oKeyChain = KeyChain_new(umk);
     ASSURE(oKeyChain != NULL);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_0, aucKey_0);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_0, aucKey_0, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_1, aucKey_1);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_1, aucKey_1, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_2, aucKey_2);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_2, aucKey_2, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_3, aucKey_3);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_3, aucKey_3, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_4, aucKey_4);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_4, aucKey_4, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_5, aucKey_5);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_5, aucKey_5, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_6, aucKey_6);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_6, aucKey_6, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_7, aucKey_7);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_7, aucKey_7, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_8, aucKey_8);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_8, aucKey_8, 0);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_9, aucKey_9);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_9, aucKey_9, 0);
     ASSURE(iValue == 1);
 
     iValue = KeyChain_getNumKeys(oKeyChain);
@@ -548,7 +550,7 @@ static void testHorizontalTree()
     iValue = KeyChain_removeKey(oKeyChain, acKeyID_4);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_2, aucKey_2);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_2, aucKey_2, 0);
     ASSURE(iValue == 0);
 
     iValue = KeyChain_getNumKeys(oKeyChain);
@@ -560,10 +562,10 @@ static void testHorizontalTree()
     pucResult = KeyChain_getEncryptedKey(oKeyChain, acKeyID_7);
     ASSURE(pucResult != NULL);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_5, aucKey_5);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_5, aucKey_5, 0);
     ASSURE(iValue == 0);
 
-    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_4, aucKey_4);
+    iValue = KeyChain_addKey(oKeyChain, acRootKeyID, acKeyID_4, aucKey_4, 0);
     ASSURE(iValue == 1);
 
     pucResult = KeyChain_getKey(oKeyChain, acKeyID_4, aucBuf);
@@ -572,7 +574,7 @@ static void testHorizontalTree()
     iValue = KeyChain_contains(oKeyChain, acKeyID_4);
     ASSURE(iValue == 1);
 
-    iValue = KeyChain_addKey(oKeyChain, acKeyID_3, acKeyID_7, aucKey_7);
+    iValue = KeyChain_addKey(oKeyChain, acKeyID_3, acKeyID_7, aucKey_7, 0);
     ASSURE(iValue == 0);
 
     iValue = KeyChain_getNumKeys(oKeyChain);

@@ -6,6 +6,7 @@ all: testkeychain memkeychain testkeycrypto testtsm
 
 clean:
 	rm -f *.o
+	rm testkeychain memkeychain testkeycrypto testtsm
 
 # Dependency rules for file targets
 memkeychain: testkeychain.o keychain.o keycrypto.o sha256.o

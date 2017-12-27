@@ -7,7 +7,7 @@
 #include "sha256.h"
 #include "tsm.h"
 #include <stdlib.h>
-#include <string.h>  
+//#include <string.h>  
 #include <assert.h>
 #include <stdio.h>
 
@@ -59,21 +59,24 @@ int main(void)
     KeyChain_T oKeyChain;
 
     oKeyChain = KeyChain_new(umk);
-    status = AddKeyToChain(oKeyChain, "0", "00");
+    status = AddKeyToChain(oKeyChain, "0", "00", 0);
     if (status) printf("added key!\n");
     sleep(1);
-    status = AddKeyToChain(oKeyChain, "0", "01");
+    status = AddKeyToChain(oKeyChain, "0", "01", 1);
     if (status) printf("added key!\n");
     sleep(1);
-    status = AddKeyToChain(oKeyChain, "00", "000");
+    status = AddKeyToChain(oKeyChain, "00", "000", 1);
+    if (status) printf("added key!\n");
+    sleep(1);
+    status = AddKeyToChain(oKeyChain, "00", "001", 1);
     if (status) printf("added key!\n");
 
     // small text file
-    status = Encrypt("file.txt", "file.enc", oKeyChain, "00");
+    status = Encrypt("file.txt", "file.enc", oKeyChain, "001");
     if (status) printf("encrypted file.txt into file.enc\n");
     else printf("encryption failed\n");
 
-    status = Decrypt("file.enc", "file.dec", oKeyChain, "00");
+    status = Decrypt("file.enc", "file.dec", oKeyChain, "001");
     if (status) printf("decrypted file.enc into file.dec\n");
     else printf("decryption failed\n");
 
@@ -86,7 +89,6 @@ int main(void)
     if (status) printf("decrypted elephantenc.jpg into elephantdec.jpg\n");
     else printf("decryption failed\n");
 
-
     // 8 byte multiple
     status = Encrypt("file2.txt", "file2.enc", oKeyChain, "000");
     if (status) printf("encrypted file2.txt into file2.enc\n");
@@ -95,6 +97,32 @@ int main(void)
     status = Decrypt("file2.enc", "file2.dec", oKeyChain, "000");
     if (status) printf("decrypted file2.enc into file2.dec\n");
     else printf("decryption failed\n");
+
+    status = DeleteKeyFromChain(oKeyChain, "001");
+    if (status) printf("deleted key!\n");
+
+    // should fail, key revoked
+    status = Decrypt("file.enc", "file.dec", oKeyChain, "001");
+    if (status) printf("decrypted file.enc into file.dec\n");
+    else printf("decryption failed\n");
+
+    sleep(1);
+    status = AddKeyToChain(oKeyChain, "0", "02", 1);
+    if (status) printf("added key!\n");
+
+    // should fail, wrong key
+    status = Decrypt("file.enc", "file.dec", oKeyChain, "02");
+    if (status) printf("decrypted file.enc into file.dec\n");
+    else printf("decryption failed\n");   
+
+    // encrypt with new key
+    status = Encrypt("file.txt", "file.enc", oKeyChain, "02");
+    if (status) printf("encrypted file.txt into file.enc\n");
+    else printf("encryption failed\n");
+
+    status = Decrypt("file.enc", "file.dec", oKeyChain, "02");
+    if (status) printf("decrypted file.enc into file.dec\n");
+    else printf("decryption failed\n"); 
 
     KeyChain_free(oKeyChain);
     

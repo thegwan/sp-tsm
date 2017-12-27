@@ -7,14 +7,14 @@
 #include "keycrypto.h"
 #include "sha256.h"
 #include <stdlib.h>
-#include <string.h>  /* memcpy, strcpy, strlen, memcmp, strcmp */
-#include <assert.h>  /* asserts  */
-// #include <stdio.h>
+#include <string.h>
+#include <assert.h>
 
-#define KEYLEN    8  // bytes
-#define HASHLEN   8  // bytes
-#define INTBUFLEN (sizeof(int) * 8 + 1)            
-#define ARRBUFLEN (sizeof(unsigned char) * 16 + 1)
+#define KEYLEN     8   // bytes
+#define HASHLEN    32  // bytes
+#define INTBUFLEN  (sizeof(int) * 8 + 1)            
+#define KEYBUFLEN  (sizeof(unsigned char) * KEYLEN*2 + 1)
+#define HASHBUFLEN (sizeof(unsigned char) * HASHLEN*2 + 1)
 
 /*--------------------------------------------------------------------*/
 
@@ -23,14 +23,20 @@
 
 struct KeyNode
 {
-    /* Key ID */
+    /* key ID */
     char *pcKeyID;
 
     /* 64 bit encrypted key, encrypted by the parent key */
     unsigned char *pucEncKey;
 
-    /* 64 bit keyed hash of the key record */
+    /* 256 bit intermediate hash or hash of the data */
+    unsigned char *pucInterHash;
+
+    /* 256 bit keyed hash of the key record */
     unsigned char *pucHash;
+
+    /* type non-leaf: 0, leaf: 1 */
+    int iType;
 
     /* depth of node */
     int iDepth;
@@ -41,14 +47,12 @@ struct KeyNode
     /* pointer to children (first child) */
     struct KeyNode *psChild;
 
-    /* pointer to next node at same level */
+    /* pointer to sibling node at same level */
     struct KeyNode *psNext;
 
-    /* pointer to the node's parent */
+    /* pointer to parent */
     struct KeyNode *psParent;
-
 };
-
 
 /*--------------------------------------------------------------------*/
 
@@ -64,19 +68,17 @@ struct KeyChain
     struct KeyNode *psRoot;
 };
 
-
 /*--------------------------------------------------------------------*/
 /* Private functions:                                                 */
 /*--------------------------------------------------------------------*/
 
-/* 256 bit hash of key ID, the encrypted key, depth, and 
-   parent key ID. */
-
+/* 256 bit hash of the key node */
 static void hashKeyNode(struct KeyNode *psNode, unsigned char *hash)
 {
     SHA256_CTX ctx;
     char int_buf[INTBUFLEN];
-    char key_buf[ARRBUFLEN];
+    char key_buf[KEYBUFLEN];
+    char hash_buf[HASHBUFLEN];
     char *pcParentKeyID;
 
     assert(psNode != NULL);
@@ -84,46 +86,54 @@ static void hashKeyNode(struct KeyNode *psNode, unsigned char *hash)
     assert(psNode->pcKeyID != NULL);
     assert(psNode->pucEncKey != NULL);
 
+    // clear buffers
     memset(int_buf, 0, INTBUFLEN);
-    memset(key_buf, 0, ARRBUFLEN);
+    memset(key_buf, 0, KEYBUFLEN);
+    memset(hash_buf, 0, HASHBUFLEN);
 
     if (psNode->psParent == NULL)
         pcParentKeyID = "0";
     else
         pcParentKeyID = psNode->psParent->pcKeyID;
 
+    // compute hash over all the contents
     sha256_init(&ctx);
 
     sha256_update(&ctx, psNode->pcKeyID, strlen(psNode->pcKeyID));
 
-    arrToString(psNode->pucEncKey, key_buf);
+    sha256_update(&ctx, pcParentKeyID, strlen(pcParentKeyID));
+
+    arrToString(psNode->pucEncKey, key_buf, KEYLEN);
     sha256_update(&ctx, key_buf, strlen(key_buf));
+
+    arrToString(psNode->pucInterHash, hash_buf, HASHLEN);
+    sha256_update(&ctx, hash_buf, strlen(hash_buf));
+
+    intToString(psNode->iType, int_buf);
+    sha256_update(&ctx, int_buf, strlen(int_buf));
 
     intToString(psNode->iDepth, int_buf);
     sha256_update(&ctx, int_buf, strlen(int_buf));
 
-    sha256_update(&ctx, pcParentKeyID, strlen(pcParentKeyID));
-
     sha256_final(&ctx, hash);
-    // print_hash(hash);
 
 }
 
 /*--------------------------------------------------------------------*/
 
-/* Recursive helper function to free the KeyNode psNode and all its
-   children and siblings */
+/* Recursive helper function to free psNode and all its children and 
+   siblings */
 static void freeNodes(struct KeyNode *psNode)
 {
     if (psNode) {
         freeNodes(psNode->psNext);
         freeNodes(psNode->psChild);
 
-        /* free key data */
+        // free key node content
         free(psNode->pcKeyID);
         free(psNode->pucEncKey);
+        free(psNode->pucInterHash);
         free(psNode->pucHash);
-        // free(psNode->psMetaData);
 
         free(psNode);
     }
@@ -151,7 +161,8 @@ static struct KeyNode *getKeyNode(struct KeyNode *psNode, char *pcKeyID)
 
 /*--------------------------------------------------------------------*/
 
-/* Recursive helper function to get plaintext key of psNode */
+/* Recursive helper function to get plaintext key of psNode, placing
+   the result in pucOutput */
 static unsigned char *getPlainKey(struct KeyNode *psNode,
                                   unsigned char *pucOutput)
 {
@@ -170,10 +181,10 @@ static unsigned char *getPlainKey(struct KeyNode *psNode,
 
 /*--------------------------------------------------------------------*/
 
-/* Helper function to remove keynode with id pcKeyID */
+/* Recursive helper function to remove keynode with id pcKeyID */
 static struct KeyNode *removeKeyNode(struct KeyNode *psCurrNode, 
-                                    struct KeyNode *psPrevNode,
-                                    char *pcKeyID)
+                                     struct KeyNode *psPrevNode,
+                                     char *pcKeyID)
 {
     int currDepth;
     while (psCurrNode != NULL) {
@@ -186,6 +197,7 @@ static struct KeyNode *removeKeyNode(struct KeyNode *psCurrNode,
                 else {
                     psPrevNode->psChild = psCurrNode->psNext;
                 }
+                // free all children
                 freeNodes(psCurrNode->psChild);
                 return psCurrNode;
             }
@@ -199,6 +211,55 @@ static struct KeyNode *removeKeyNode(struct KeyNode *psCurrNode,
     return NULL;
 }
 
+/*--------------------------------------------------------------------*/
+
+/* Compute hash over the key node hashes psNode's children, place
+   the result in aucHashBuf */
+static void hashChildren(struct KeyNode *psNode, unsigned char *aucHashBuf)
+{
+    struct KeyNode *psCurrNode;
+    char hash_buf[HASHBUFLEN];
+    SHA256_CTX ctx;
+
+    assert(psNode != NULL);
+    assert(aucHashBuf != NULL);
+
+    memset(aucHashBuf, 0, HASHLEN);
+    memset(hash_buf, 0, HASHBUFLEN);
+
+    if (psNode->iNumChildren == 0)
+        return;
+
+    sha256_init(&ctx);
+
+    psCurrNode = psNode->psChild;
+    while (psCurrNode != NULL) {
+        arrToString(psCurrNode->pucHash, hash_buf, HASHLEN);
+        sha256_update(&ctx, hash_buf, strlen(hash_buf));
+        psCurrNode = psCurrNode->psNext;
+    }
+    sha256_final(&ctx, aucHashBuf);
+}
+
+/*--------------------------------------------------------------------*/
+
+/* Update hash of intermediate node psNode */
+static void updateHashes(struct KeyNode *psNode)
+{
+    char aucHashBuf[HASHLEN];
+
+    assert(psNode != NULL);
+
+    // update internal hash with hashes of children
+    hashChildren(psNode, aucHashBuf);
+    memcpy(psNode->pucInterHash, aucHashBuf, HASHLEN);
+
+    // rehash entire key node
+    memset(aucHashBuf, 0, HASHLEN);
+    hashKeyNode(psNode, aucHashBuf);
+    memcpy(psNode->pucHash, aucHashBuf, HASHLEN);
+}
+
 
 /*--------------------------------------------------------------------*/
 /* Public functions:                                                  */
@@ -210,19 +271,17 @@ KeyChain_T KeyChain_new(unsigned long umk)
     struct KeyNode *psRoot;
     char *pcRootKeyID;
     unsigned char *pucRootEncKey;
+    unsigned char *pucRootInterHash;
     unsigned char *pucRootHash;
-    unsigned char aucHashBuf[32];   // 256 bit hash
-    // unsigned char aucRootEncKey[] = {0x01, 0x23, 0x45, 0x67,
-    //                                         0x89, 0xab, 0xcd, 0xef};
     unsigned char *aucRootEncKey;
+    unsigned char aucHashBuf[HASHLEN];   // 256 bit hash
     aucRootEncKey = (unsigned char*)&umk;
-
 
     oKeyChain = (KeyChain_T)malloc(sizeof(struct KeyChain));
     if (oKeyChain == NULL)
         return NULL;
 
-    // if this fails, free oKeyChain?
+    // Instantiate software root node
     psRoot = (struct KeyNode *)malloc(sizeof(struct KeyNode));
     if (psRoot == NULL)
         return NULL;
@@ -232,28 +291,35 @@ KeyChain_T KeyChain_new(unsigned long umk)
         return NULL;
     strcpy(pcRootKeyID, "0");
 
-    pucRootEncKey = (unsigned char *)malloc(KEYLEN * sizeof(unsigned char));  // 64 bits
+    // 64 bit key
+    pucRootEncKey = (unsigned char *)malloc(KEYLEN * sizeof(unsigned char));
     if (pucRootEncKey == NULL)
         return NULL;
     memcpy(pucRootEncKey, aucRootEncKey, KEYLEN);
 
+    // 256 bit internal hash
+    pucRootInterHash = (unsigned char *)malloc(HASHLEN * sizeof(unsigned char));
+    if (pucRootInterHash == NULL)
+        return NULL;
+    memset(pucRootInterHash, 0, HASHLEN);
 
-    pucRootHash = (unsigned char *)malloc(HASHLEN * sizeof(unsigned char));  // 64 bits
+    // 256 bit key node hash
+    pucRootHash = (unsigned char *)malloc(HASHLEN * sizeof(unsigned char));
     if (pucRootHash == NULL)
         return NULL;
 
-    psRoot->pcKeyID = pcRootKeyID;
-    psRoot->pucEncKey = pucRootEncKey;
-
-    psRoot->iDepth = 0;
+    psRoot->pcKeyID      = pcRootKeyID;
+    psRoot->pucEncKey    = pucRootEncKey;
+    psRoot->pucInterHash = pucRootInterHash;
+    psRoot->iType        = 0;
+    psRoot->iDepth       = 0;
     psRoot->iNumChildren = 0;
-    psRoot->psChild = NULL;
-    psRoot->psNext = NULL;
-    psRoot->psParent = NULL;
-    // psRoot->psMetaData = NULL;
+    psRoot->psChild      = NULL;
+    psRoot->psNext       = NULL;
+    psRoot->psParent     = NULL;
 
     hashKeyNode(psRoot, aucHashBuf);
-    memcpy(pucRootHash, aucHashBuf, HASHLEN);  // first 64 bits;
+    memcpy(pucRootHash, aucHashBuf, HASHLEN);
     psRoot->pucHash = pucRootHash;
 
     oKeyChain->iNumKeys = 0;
@@ -292,12 +358,12 @@ int KeyChain_contains(KeyChain_T oKeyChain, char *pcKeyID)
     if (psResultNode != NULL)
         return 1;
     return 0;
-
 }
 
 /*--------------------------------------------------------------------*/
 
-unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID,
+unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, 
+                               char *pcKeyID,
                                unsigned char *pucOutput)
 {
     struct KeyNode *psResultNode;
@@ -310,7 +376,6 @@ unsigned char *KeyChain_getKey(KeyChain_T oKeyChain, char *pcKeyID,
     if (psResultNode != NULL)
         return getPlainKey(psResultNode, pucOutput);
     return NULL;
-
 }
 
 /*--------------------------------------------------------------------*/
@@ -330,7 +395,7 @@ unsigned char *KeyChain_getEncryptedKey(KeyChain_T oKeyChain, char *pcKeyID)
 
 /*--------------------------------------------------------------------*/
 
-unsigned char *KeyChain_getHash(KeyChain_T oKeyChain, char *pcKeyID)
+unsigned char *KeyChain_getInterHash(KeyChain_T oKeyChain, char *pcKeyID)
 {
     struct KeyNode *psResultNode;
 
@@ -339,8 +404,23 @@ unsigned char *KeyChain_getHash(KeyChain_T oKeyChain, char *pcKeyID)
 
     psResultNode = getKeyNode(oKeyChain->psRoot, pcKeyID);
     if (psResultNode != NULL)
-        return psResultNode->pucHash;
+        return psResultNode->pucInterHash;
     return NULL;
+}
+
+/*--------------------------------------------------------------------*/
+
+int KeyChain_getType(KeyChain_T oKeyChain, char *pcKeyID)
+{
+    struct KeyNode *psResultNode;
+
+    assert(oKeyChain != NULL);
+    assert(pcKeyID != NULL);
+
+    psResultNode = getKeyNode(oKeyChain->psRoot, pcKeyID);
+    if (psResultNode != NULL)
+        return psResultNode->iType;
+    return -1;
 }
 
 /*--------------------------------------------------------------------*/
@@ -348,17 +428,19 @@ unsigned char *KeyChain_getHash(KeyChain_T oKeyChain, char *pcKeyID)
 int KeyChain_addKey(KeyChain_T oKeyChain, 
                     char *pcParentKeyID,
                     char *pcKeyID, 
-                    unsigned char *pucKey)
+                    unsigned char *pucKey,
+                    int iType)
 {
     struct KeyNode *psNewNode;
     struct KeyNode *psParentNode;
     struct KeyNode *psParentIter;
     char *pcKeyIDCpy;
     unsigned char *pucEncKey;
+    unsigned char *pucInterHash;
     unsigned char *pucHash;
 
-    unsigned char aucParentKeyBuf[KEYLEN];   // 64 bit key length
-    unsigned char aucHashBuf[32];       // 256 bit SHA-256 
+    unsigned char aucParentKeyBuf[KEYLEN];   // 64 bit key
+    unsigned char aucHashBuf[HASHLEN];       // 256 bit hash 
 
     assert(oKeyChain != NULL);
     assert(pcParentKeyID != NULL);
@@ -378,6 +460,7 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
     if (KeyChain_contains(oKeyChain, pcKeyID))
         return 0;
 
+    // create new key node
     psNewNode = (struct KeyNode *)malloc(sizeof(struct KeyNode));
     if (psNewNode == NULL)
         return 0;
@@ -388,12 +471,16 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
         return 0;
     strcpy(pcKeyIDCpy, pcKeyID);
 
-    pucEncKey = (unsigned char *)malloc(KEYLEN * sizeof(unsigned char));  // 64 bit
+    pucEncKey = (unsigned char *)malloc(KEYLEN * sizeof(unsigned char));
     if (pucEncKey == NULL)
         return 0;
     memset(pucEncKey, 0, KEYLEN);
     xor_encrypt(pucKey, pucEncKey, KEYLEN, getPlainKey(psParentNode, aucParentKeyBuf));
 
+    pucInterHash = (unsigned char *)malloc(HASHLEN * sizeof(unsigned char));
+    if (pucInterHash == NULL)
+        return 0;
+    memset(pucInterHash, 0, HASHLEN);
 
     pucHash = (unsigned char *)malloc(HASHLEN * sizeof(unsigned char));
     if (pucHash == NULL)
@@ -401,7 +488,9 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
     
     psNewNode->pcKeyID = pcKeyIDCpy;
     psNewNode->pucEncKey = pucEncKey;
+    psNewNode->pucInterHash = pucInterHash;
 
+    psNewNode->iType = iType;
     psNewNode->iDepth = strlen(pcParentKeyID);
     psNewNode->iNumChildren = 0;
 
@@ -410,14 +499,16 @@ int KeyChain_addKey(KeyChain_T oKeyChain,
     psNewNode->psParent = psParentNode;
 
     hashKeyNode(psNewNode, aucHashBuf);
-    memcpy(pucHash, aucHashBuf, HASHLEN);    // first 64 bits
+    memcpy(pucHash, aucHashBuf, HASHLEN);
     psNewNode->pucHash = pucHash; 
 
     psParentNode->psChild = psNewNode;
 
+    // update metadata and intermediate hashes on path to root node
     psParentIter = psParentNode;
     while (psParentIter != NULL) {
         psParentIter->iNumChildren++;
+        updateHashes(psParentIter);
         psParentIter = psParentIter->psParent;
     }
     oKeyChain->iNumKeys++;
@@ -439,20 +530,23 @@ int KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID)
         return 0;
 
     psResultNode = removeKeyNode(oKeyChain->psRoot->psChild,
-                                oKeyChain->psRoot,
-                                pcKeyID);
+                                 oKeyChain->psRoot,
+                                 pcKeyID);
     if (psResultNode == NULL)
         return 0;
 
+    // update metadata and intermediate hashes on path to root node
     psParentIter = psResultNode->psParent;
     while (psParentIter != NULL) {
         (psParentIter->iNumChildren) -= (psResultNode->iNumChildren + 1);
+        updateHashes(psParentIter);
         psParentIter = psParentIter->psParent;
     }
 
     (oKeyChain->iNumKeys) -= (psResultNode->iNumChildren + 1);
     free(psResultNode->pcKeyID);
     free(psResultNode->pucEncKey);
+    free(psResultNode->pucInterHash);
     free(psResultNode->pucHash);
 
     free(psResultNode);
@@ -462,22 +556,73 @@ int KeyChain_removeKey(KeyChain_T oKeyChain, char *pcKeyID)
 
 /*--------------------------------------------------------------------*/
 
-int KeyChain_verifyKey(KeyChain_T oKeyChain, char *pcKeyID)
+int KeyChain_updateKey(KeyChain_T oKeyChain, 
+                       char *pcKeyID, 
+                       unsigned char *pucInterHash)
 {
     struct KeyNode *psResultNode;
-    unsigned char hash[32];
+    struct KeyNode *psCurrNode;
+    unsigned char aucHashBuf[HASHLEN];
 
     assert(oKeyChain != NULL);
     assert(pcKeyID != NULL);
 
     psResultNode = getKeyNode(oKeyChain->psRoot, pcKeyID);
-    if (psResultNode != NULL) {
-        hashKeyNode(psResultNode, hash);
-        return (memcmp(psResultNode->pucHash, hash, HASHLEN) == 0);
+    if (psResultNode == NULL) {
+        return 0;
     }
-    return 0;
+
+    // update internal hash
+    memcpy(psResultNode->pucInterHash, pucInterHash, HASHLEN);
+
+    // rehash entire key node
+    hashKeyNode(psResultNode, aucHashBuf);
+    memcpy(psResultNode->pucHash, aucHashBuf, HASHLEN);
+
+    // update intermediate hashes on path to root node
+    psCurrNode = psResultNode->psParent;
+    while (psCurrNode != NULL) {
+        updateHashes(psCurrNode);
+        psCurrNode = psCurrNode->psParent;
+    }
+    
+    return 1;
 }
 
 /*--------------------------------------------------------------------*/
 
+int KeyChain_verifyKey(KeyChain_T oKeyChain, char *pcKeyID)
+{
+    struct KeyNode *psResultNode;
+    struct KeyNode *psNodeIter;
+    struct KeyNode *psNodeChild;
+    unsigned char aucHashBuf[HASHLEN];
 
+    assert(oKeyChain != NULL);
+    assert(pcKeyID != NULL);
+
+    psResultNode = getKeyNode(oKeyChain->psRoot, pcKeyID);
+    if (psResultNode == NULL)
+        return 0;
+
+    psNodeIter = psResultNode;
+    while (psNodeIter != NULL) {
+        hashChildren(psNodeIter, aucHashBuf);
+
+        // non-leaf node intermediate hashes must match
+        if (psNodeIter->iType == 0 && 
+            memcmp(psNodeIter->pucInterHash, aucHashBuf, HASHLEN) != 0) {
+            return 0;
+        }
+
+        // key node hash must match
+        hashKeyNode(psNodeIter, aucHashBuf);
+        if (memcmp(psNodeIter->pucHash, aucHashBuf, HASHLEN) != 0) {
+            return 0;
+        }
+        psNodeIter = psNodeIter->psParent;
+    }
+    return 1;
+}
+
+/*--------------------------------------------------------------------*/
