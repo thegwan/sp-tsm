@@ -11,3 +11,5 @@ $ ./testtsm
 $ ./demo1_driver
 ```
 --------------------
+
+Thank you to Brad Conte for providing the [SHA-256](https://github.com/B-Con/crypto-algorithms) implementation.
