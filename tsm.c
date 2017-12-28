@@ -79,7 +79,7 @@ int Encrypt(const char *inputFileName,
 
     // must be a leaf key
     if (KeyChain_getType(oKeyChain, pcKeyID) != 1) {
-        // printf("wrong type!\n");
+        printf("\n---wrong type!\n");  // for demo
         return 0;
     }
 
@@ -88,7 +88,7 @@ int Encrypt(const char *inputFileName,
 
     // verify integrity of key node
     if (!KeyChain_verifyKey(oKeyChain, pcKeyID)) {
-        // printf("hash mismatch!\n");
+        printf("\n---hash mismatch!\n");   // for demo
         return 0;
     }
 
@@ -156,8 +156,10 @@ int Decrypt(const char *inputFileName,
     if (fpi == NULL)
         return 0;
 
-    if (!KeyChain_contains(oKeyChain, pcKeyID))
+    if (!KeyChain_contains(oKeyChain, pcKeyID)) {
+        printf("\n---invalid key\n");   // for demo
         return 0;
+    }
 
     // verify hash of the data
     sha256_init(&ctx);
@@ -167,7 +169,7 @@ int Decrypt(const char *inputFileName,
     }
     sha256_final(&ctx, hash);
     if (memcmp(KeyChain_getInterHash(oKeyChain, pcKeyID), hash, HASHLEN) != 0) {
-        printf("data hash mismatch\n");
+        printf("\n---data hash mismatch!\n");   // for demo
         fclose(fpi);
         return 0;
     }
@@ -175,7 +177,7 @@ int Decrypt(const char *inputFileName,
 
     // verify integrity of key node
     if (!KeyChain_verifyKey(oKeyChain, pcKeyID)) {
-        printf("key hash mismatch\n");
+        printf("\n---key hash mismatch!\n");   // for demo
         return 0;
     }
 
