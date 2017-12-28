@@ -18,12 +18,12 @@ int main()
     unsigned int stop;
     FILE *fptr;
 
-    // load umk with the value stored in UMK CSR 0x050
-    __asm__ __volatile__(
-        "csrr %0, 0x050;\n"
-        : "=r" (umk));
+    // // load umk with the value stored in UMK CSR 0x050
+    // __asm__ __volatile__(
+    //     "csrr %0, 0x050;\n"
+    //     : "=r" (umk));
     
-    // umk = 0xefcdab8967452301;  // uncomment for x86 test
+    umk = 0xefcdab8967452301;  // uncomment for x86 test
 
     // initialize a keychain 
     // (this would normally be done during user initialization)
